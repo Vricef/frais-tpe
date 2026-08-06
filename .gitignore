@@ -59,5 +59,15 @@ ui-debug.log
 .env.*
 *.env
 
+# Clés de compte de service Firebase (import des grilles tarifaires) —
+# elles donnent un accès administrateur complet au projet.
+cle-service.json
+*-service-account*.json
+serviceAccountKey*.json
+firebase-adminsdk*.json
+
+# Dépendances du script d'import
+firestore/node_modules/
+
 # Harnais de prévisualisation local (screenshots de mise au point UI)
 lib/_preview.dart

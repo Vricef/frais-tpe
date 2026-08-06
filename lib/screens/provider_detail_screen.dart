@@ -47,7 +47,7 @@ class ProviderDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                provider.nom,
+                provider.nomComplet,
                 style: textTheme.headlineMedium?.copyWith(fontSize: 26),
               ),
               const SizedBox(height: 6),
@@ -59,6 +59,14 @@ class ProviderDetailScreen extends StatelessWidget {
                 _GrilleTarifaire(provider: provider)
               else
                 _FourchetteNegociation(provider: provider),
+              if (provider.tarifsAdditionnels.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _TarifsAdditionnels(tarifs: provider.tarifsAdditionnels),
+              ],
+              if (provider.aUnTerminalAAcheter) ...[
+                const SizedBox(height: 16),
+                _CoutTerminal(provider: provider),
+              ],
               if (provider.derniereMaj != null) ...[
                 const SizedBox(height: 16),
                 _MentionMiseAJour(date: provider.derniereMaj!),
@@ -308,6 +316,139 @@ class _FourchetteNegociation extends StatelessWidget {
   }
 }
 
+/// Les taux qui ne s'appliquent qu'à certains encaissements.
+///
+/// Ils ne pèsent pas sur le calcul — celui-ci retient le cas courant —
+/// mais les afficher évite une mauvaise surprise à qui encaisse beaucoup
+/// d'Amex, de cartes étrangères ou de paiements à distance.
+class _TarifsAdditionnels extends StatelessWidget {
+  const _TarifsAdditionnels({required this.tarifs});
+
+  final List<TarifAdditionnel> tarifs;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return TicketCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'AUTRES CAS DE PAIEMENT',
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 11,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          for (final t in tarifs)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      t.libelle,
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    t.fraisFixe == null
+                        ? '${_formatPourcent.format(t.taux)} %'
+                        : '${_formatPourcent.format(t.taux)} % + '
+                            '${_formatEuro.format(t.fraisFixe)}',
+                    style: context.amountStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 8),
+          Text(
+            'Le coût estimé ci-dessus retient le cas courant : encaissement '
+            'en personne, carte domestique.',
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 12.5,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Le prix du terminal, volontairement tenu hors du coût mensuel.
+///
+/// C'est un achat unique : l'intégrer au calcul récurrent fausserait la
+/// comparaison, mais l'ignorer masquerait un écart réel — de 29 € à 249 €
+/// selon les prestataires.
+class _CoutTerminal extends StatelessWidget {
+  const _CoutTerminal({required this.provider});
+
+  final TpeProvider provider;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final min = provider.coutTerminalMin;
+    final max = provider.coutTerminalMax;
+
+    final String montant;
+    if (min != null && max != null && min != max) {
+      montant = 'de ${_formatEuroEntier.format(min)} '
+          'à ${_formatEuroEntier.format(max)} HT';
+    } else if (min != null && max == null) {
+      montant = 'à partir de ${_formatEuroEntier.format(min)} HT';
+    } else {
+      montant = '${_formatEuroEntier.format(max ?? min)} HT';
+    }
+
+    return TicketCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.point_of_sale_outlined, size: 19, color: colors.accent),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Terminal $montant',
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Achat unique, non compté dans le coût mensuel ci-dessus.",
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MentionMiseAJour extends StatelessWidget {
   const _MentionMiseAJour({required this.date});
 
@@ -341,3 +482,11 @@ final _formatEuro = NumberFormat.currency(
 /// Les taux s'écrivent avec au plus deux décimales, sans zéro inutile
 /// (1,75 % mais 2 % plutôt que 2,00 %).
 final _formatPourcent = NumberFormat('0.##', 'fr_FR');
+
+/// Les prix de matériel sont annoncés en euros entiers (39 €, 249 €) :
+/// les afficher « 39,00 € » ferait faussement précis.
+final _formatEuroEntier = NumberFormat.currency(
+  locale: 'fr_FR',
+  symbol: '€',
+  decimalDigits: 0,
+);

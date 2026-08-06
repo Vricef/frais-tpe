@@ -185,6 +185,93 @@ void main() {
       expect(find.byType(MaskedAmount), findsNothing);
     });
 
+    testWidgets(
+      "l'ordre des lignes masquées ne dépend pas de leur montant",
+      (tester) async {
+        // Les offres masquées sont rendues par ordre alphabétique et non
+        // par coût. Sans cela, ajouter un prestataire personnalisé — dont
+        // l'utilisateur choisit le tarif — et observer où il se place
+        // permettrait de retrouver n'importe quel montant masqué par
+        // dichotomie.
+        await tester.pumpWidget(_tableau(debloque: false));
+
+        final noms = tester
+            .widgetList<Text>(find.byType(Text))
+            .map((t) => t.data ?? '')
+            .where((t) => ['Banque Régionale', 'Offre B', 'Offre C'].contains(t))
+            .toList();
+
+        // Ordre alphabétique : Banque Régionale, Offre B, Offre C.
+        // Par coût, ce serait Offre B (50), Banque (150), Offre C (300).
+        expect(noms, ['Banque Régionale', 'Offre B', 'Offre C']);
+      },
+    );
+
+    testWidgets('aucun rang n\'est affiché tant que le tableau est verrouillé', (
+      tester,
+    ) async {
+      // Un rang dirait combien d'offres masquées s'intercalent entre deux
+      // montants connus, et donc dans quel intervalle elles se situent.
+      await tester.pumpWidget(_tableau(debloque: false));
+      final textes = _textesAffiches(tester);
+
+      for (final rang in ['1', '2', '3', '4', '5']) {
+        expect(
+          textes,
+          isNot(contains(rang)),
+          reason: 'le rang $rang situerait les offres masquées',
+        );
+      }
+
+      await tester.pumpWidget(_tableau(debloque: true));
+      expect(_textesAffiches(tester), contains('1'));
+    });
+
+    testWidgets(
+      'un prestataire saisi par l\'utilisateur reste chiffré et ne déplace '
+      'pas les lignes masquées',
+      (tester) async {
+        const perso = TpeProvider(
+          id: 'perso_1',
+          nom: 'Smile&Pay',
+          type: ProviderType.processeurPaiement,
+          fraisTransactionCb: 1.6, // 160,00 € — entre deux montants masqués
+          estPersonnalise: true,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light,
+            home: ComparisonTableScreen(
+              volumeMensuel: _volume,
+              providers: const [
+                _actuel,
+                _meilleur,
+                _milieuPetit,
+                _milieuGros,
+                _banqueMasquee,
+                perso,
+              ],
+              providerActuel: _actuel,
+              entitlement: Entitlement(debloque: false),
+            ),
+          ),
+        );
+
+        final textes = _textesAffiches(tester).join('|');
+
+        // Son montant lui est montré : il en a fourni les taux, le masquer
+        // n'aurait rien protégé.
+        expect(textes, contains(_euro.format(160)));
+
+        // Les montants masqués le restent, malgré son insertion.
+        for (final cache in [50, 300, 150]) {
+          expect(textes, isNot(contains(_euro.format(cache))));
+        }
+        expect(find.byType(MaskedAmount), findsNWidgets(3));
+      },
+    );
+
     testWidgets('l\'achat révèle les montants sans quitter le tableau', (
       tester,
     ) async {

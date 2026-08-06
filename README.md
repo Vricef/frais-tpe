@@ -34,8 +34,36 @@ l'app :
    `lib/firebase_options.dart` et les fichiers de config natifs
    (`google-services.json`, `GoogleService-Info.plist`), volontairement
    exclus du dépôt (`.gitignore`) car spécifiques à chaque environnement.
-3. Créer la collection `providers` dans Firestore selon le modèle décrit
-   dans le cahier des charges (§5).
+3. Importer les grilles tarifaires dans la collection `providers` (voir
+   ci-dessous).
+
+## Grilles tarifaires
+
+Les tarifs vivent dans Firestore et non dans le code, pour être corrigés à
+distance sans repasser par la review des stores. `firestore/` contient les
+données et l'outil d'import :
+
+```
+firestore/providers.seed.json   Les grilles tarifaires (source de vérité)
+firestore/seed_providers.js     Import / mise à jour vers Firestore
+```
+
+```bash
+cd firestore
+npm install firebase-admin
+node seed_providers.js --dry-run     # vérifier sans écrire
+GOOGLE_APPLICATION_CREDENTIALS=./cle-service.json node seed_providers.js
+```
+
+L'écriture est idempotente (`merge`) : le script sert aussi bien à
+initialiser la base qu'à mettre à jour un tarif qui a changé. Modifier le
+JSON puis relancer suffit — inutile de publier une nouvelle version de
+l'app.
+
+La clé de service se télécharge depuis la console Firebase (Paramètres du
+projet → Comptes de service). Ne la committez pas : `.gitignore` exclut
+déjà les fichiers `.json` de credentials courants, mais vérifiez avant de
+pousser.
 
 ## Développement
 

@@ -7,18 +7,22 @@ import '../services/entitlement.dart';
 import '../services/fee_calculator.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/custom_provider_sheet.dart';
 import '../widgets/masked_amount.dart';
 import '../widgets/ticket_card.dart';
 import 'paywall_screen.dart';
 import 'provider_detail_screen.dart';
 
 /// Écran 3 bis du parcours (§8) : le tableau comparatif de toutes les
-/// offres, classées de la moins chère à la plus chère.
+/// offres.
 ///
 /// Présenté comme un ticket de caisse : une ligne par offre, les montants
 /// alignés en colonne. Le prestataire de l'utilisateur y figure aussi —
 /// se situer dans le classement fait partie de l'information.
-class ComparisonTableScreen extends StatelessWidget {
+///
+/// L'utilisateur peut y ajouter un prestataire absent de la base, qui
+/// rejoint la comparaison au même titre que les autres.
+class ComparisonTableScreen extends StatefulWidget {
   const ComparisonTableScreen({
     super.key,
     required this.volumeMensuel,
@@ -35,46 +39,97 @@ class ComparisonTableScreen extends StatelessWidget {
   final double? panierMoyen;
   final FeeCalculator calculator;
 
-  /// Tant que l'achat n'est pas fait, seuls le prestataire actuel et la
-  /// meilleure offre affichent leur coût (§4 : la version gratuite
+  /// Tant que l'achat n'est pas fait, seules la meilleure offre et celle
+  /// de l'utilisateur affichent leur coût (§4 : la version gratuite
   /// compare un seul prestataire).
   final Entitlement entitlement;
 
   @override
+  State<ComparisonTableScreen> createState() => _ComparisonTableScreenState();
+}
+
+class _ComparisonTableScreenState extends State<ComparisonTableScreen> {
+  /// Prestataires saisis à la main pendant la session. Leur sauvegarde
+  /// durable est une fonctionnalité payante (§4), pas encore implémentée.
+  final List<TpeProvider> _persos = [];
+
+  Future<void> _ajouterPrestataire() async {
+    final saisi = await afficherFormulairePrestataire(
+      context,
+      id: 'perso_${_persos.length + 1}',
+    );
+    if (saisi == null) return;
+    setState(() => _persos.add(saisi));
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
-      valueListenable: entitlement,
-      builder: (context, deverrouille, _) => _Tableau(
-        volumeMensuel: volumeMensuel,
-        providers: providers,
-        providerActuel: providerActuel,
-        panierMoyen: panierMoyen,
-        calculator: calculator,
-        entitlement: entitlement,
-        deverrouille: deverrouille,
-      ),
+      valueListenable: widget.entitlement,
+      builder: (context, deverrouille, _) {
+        final tous = [...widget.providers, ..._persos];
+        final classement = widget.calculator.classer(
+          providers: tous,
+          volumeMensuel: widget.volumeMensuel,
+          panierMoyen: widget.panierMoyen,
+        );
+
+        final coutActuel = classement
+            .where((b) => b.provider.id == widget.providerActuel.id)
+            .map((b) => b.totalMensuel)
+            .firstOrNull;
+
+        return _Vue(
+          classement: classement,
+          deverrouille: deverrouille,
+          coutActuel: coutActuel,
+          volumeMensuel: widget.volumeMensuel,
+          panierMoyen: widget.panierMoyen,
+          providerActuel: widget.providerActuel,
+          entitlement: widget.entitlement,
+          onAjouter: _ajouterPrestataire,
+        );
+      },
     );
   }
 }
 
-class _Tableau extends StatelessWidget {
-  const _Tableau({
-    required this.volumeMensuel,
-    required this.providers,
-    required this.providerActuel,
-    required this.panierMoyen,
-    required this.calculator,
-    required this.entitlement,
+class _Vue extends StatelessWidget {
+  const _Vue({
+    required this.classement,
     required this.deverrouille,
+    required this.coutActuel,
+    required this.volumeMensuel,
+    required this.panierMoyen,
+    required this.providerActuel,
+    required this.entitlement,
+    required this.onAjouter,
   });
 
-  final double volumeMensuel;
-  final List<TpeProvider> providers;
-  final TpeProvider providerActuel;
-  final double? panierMoyen;
-  final FeeCalculator calculator;
-  final Entitlement entitlement;
+  final List<FeeBreakdown> classement;
   final bool deverrouille;
+  final double? coutActuel;
+  final double volumeMensuel;
+  final double? panierMoyen;
+  final TpeProvider providerActuel;
+  final Entitlement entitlement;
+  final VoidCallback onAjouter;
+
+  /// Les offres chiffrées en version gratuite : la moins chère de la base,
+  /// celle de l'utilisateur, et celles qu'il a saisies lui-même (dont il
+  /// connaît déjà les montants, puisqu'il en a fourni les taux).
+  Set<String> get _idsVisibles {
+    final ids = <String>{providerActuel.id};
+    final meilleureReelle = classement
+        .where((b) => !b.provider.estPersonnalise)
+        .map((b) => b.provider.id)
+        .firstOrNull;
+    if (meilleureReelle != null) ids.add(meilleureReelle);
+    for (final b in classement) {
+      if (b.provider.estPersonnalise) ids.add(b.provider.id);
+    }
+    return ids;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,18 +137,23 @@ class _Tableau extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final formatVolume = NumberFormat.decimalPattern('fr_FR');
 
-    final classement = calculator.classer(
-      providers: providers,
-      volumeMensuel: volumeMensuel,
-      panierMoyen: panierMoyen,
-    );
-
-    final coutActuel = classement
-        .where((b) => b.provider.id == providerActuel.id)
-        .map((b) => b.totalMensuel)
-        .firstOrNull;
-
-    final contientEstimation = classement.any((b) => !b.provider.aTarifsFixes);
+    final idsVisibles = _idsVisibles;
+    final verrouillees = deverrouille
+        ? const <FeeBreakdown>[]
+        : (classement
+            .where((b) => !idsVisibles.contains(b.provider.id))
+            .toList()
+          // Tri alphabétique et non par coût : l'ordre d'une ligne masquée
+          // renseignerait sur son montant. Combiné à l'ajout d'un
+          // prestataire personnalisé — dont l'utilisateur choisit le
+          // tarif — un classement par coût permettrait de retrouver
+          // n'importe quel montant masqué par dichotomie.
+          ..sort((a, b) => a.provider.nomComplet
+              .toLowerCase()
+              .compareTo(b.provider.nomComplet.toLowerCase())));
+    final visibles = deverrouille
+        ? classement
+        : classement.where((b) => idsVisibles.contains(b.provider.id)).toList();
 
     return Scaffold(
       appBar: AppBar(leading: const BackButton()),
@@ -125,44 +185,72 @@ class _Tableau extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      for (var i = 0; i < classement.length; i++) ...[
+                      for (var i = 0; i < visibles.length; i++) ...[
                         if (i > 0) const TicketPerforation(),
-                        Builder(
-                          builder: (context) {
-                            // En gratuit, seules la meilleure offre et
-                            // celle de l'utilisateur sont chiffrées.
-                            final verrouille = !deverrouille &&
-                                i > 0 &&
-                                classement[i].provider.id != providerActuel.id;
-                            return _LigneOffre(
-                              rang: i + 1,
-                              breakdown: classement[i],
-                              estActuel: classement[i].provider.id ==
-                                  providerActuel.id,
-                              estMeilleure: i == 0,
-                              coutActuel: coutActuel,
-                              verrouille: verrouille,
-                              // Une ligne verrouillée ne doit pas ouvrir la
-                              // fiche : elle y afficherait le coût exact,
-                              // contournant le masquage du tableau.
-                              onTap: () => verrouille
-                                  ? _ouvrirPaywall(context)
-                                  : _ouvrirFiche(context, classement[i]),
-                            );
-                          },
+                        _LigneOffre(
+                          // Le rang n'est affiché qu'une fois débloqué :
+                          // en gratuit, il dirait combien d'offres masquées
+                          // s'intercalent entre deux montants connus.
+                          rang: deverrouille ? i + 1 : null,
+                          breakdown: visibles[i],
+                          estActuel:
+                              visibles[i].provider.id == providerActuel.id,
+                          estMeilleure: classement.isNotEmpty &&
+                              visibles[i].provider.id ==
+                                  classement.first.provider.id,
+                          coutActuel: coutActuel,
+                          verrouille: false,
+                          onTap: () => _ouvrirFiche(context, visibles[i]),
                         ),
                       ],
                     ],
                   ),
                 ),
-              if (!deverrouille && classement.length > 2) ...[
+              if (verrouillees.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                Text(
+                  'AUTRES OFFRES COMPARÉES',
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: 11,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TicketCard(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < verrouillees.length; i++) ...[
+                        if (i > 0) const TicketPerforation(),
+                        _LigneOffre(
+                          rang: null,
+                          breakdown: verrouillees[i],
+                          estActuel: false,
+                          estMeilleure: false,
+                          coutActuel: coutActuel,
+                          verrouille: true,
+                          // Une ligne verrouillée ne doit pas ouvrir la
+                          // fiche : elle y afficherait le coût exact,
+                          // contournant le masquage du tableau.
+                          onTap: () => _ouvrirPaywall(context),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 16),
                 _AppelDeblocage(
-                  nombreMasque: _nombreMasque(classement),
+                  nombreMasque: verrouillees.length,
                   onTap: () => _ouvrirPaywall(context),
                 ),
               ],
-              if (contientEstimation) ...[
+              const SizedBox(height: 16),
+              _AjoutPrestataire(onTap: onAjouter),
+              if (classement.any((b) => !b.provider.aTarifsFixes)) ...[
                 const SizedBox(height: 14),
                 _LegendeEstimation(),
               ],
@@ -171,14 +259,6 @@ class _Tableau extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  int _nombreMasque(List<FeeBreakdown> classement) {
-    var n = 0;
-    for (var i = 0; i < classement.length; i++) {
-      if (i > 0 && classement[i].provider.id != providerActuel.id) n++;
-    }
-    return n;
   }
 
   void _ouvrirPaywall(BuildContext context) {
@@ -202,54 +282,8 @@ class _Tableau extends StatelessWidget {
   }
 }
 
-/// L'invitation au déblocage, placée sous le tableau — après que
-/// l'utilisateur a vu ce qu'il manque, pas avant.
-class _AppelDeblocage extends StatelessWidget {
-  const _AppelDeblocage({required this.nombreMasque, required this.onTap});
-
-  final int nombreMasque;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return TicketCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            nombreMasque > 1
-                ? 'Voir le coût des $nombreMasque autres offres'
-                : "Voir le coût de l'autre offre",
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Débloquez la comparaison complète, l\'export PDF et la '
-            'sauvegarde pour 3,99 € — un seul paiement.',
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontSize: 13.5,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onTap,
-              child: const Text('Débloquer pour 3,99 €'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Une ligne du tableau : rang, nom, coût mensuel, et écart par rapport
-/// à la situation actuelle de l'utilisateur.
+/// Une ligne du tableau : nom, coût mensuel, et écart par rapport à la
+/// situation actuelle de l'utilisateur.
 class _LigneOffre extends StatelessWidget {
   const _LigneOffre({
     required this.rang,
@@ -261,7 +295,7 @@ class _LigneOffre extends StatelessWidget {
     required this.onTap,
   });
 
-  final int rang;
+  final int? rang;
   final FeeBreakdown breakdown;
   final bool estActuel;
   final bool estMeilleure;
@@ -300,23 +334,24 @@ class _LigneOffre extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            SizedBox(
-              width: 24,
-              child: Text(
-                '$rang',
-                style: context.amountStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textSecondary,
+            if (rang != null)
+              SizedBox(
+                width: 24,
+                child: Text(
+                  '$rang',
+                  style: context.amountStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: colors.textSecondary,
+                  ),
                 ),
               ),
-            ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    provider.nom,
+                    provider.nomComplet,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: estActuel || estMeilleure
@@ -325,11 +360,17 @@ class _LigneOffre extends StatelessWidget {
                       color: colors.textPrimary,
                     ),
                   ),
-                  if (estActuel || estMeilleure) ...[
+                  if (estActuel || estMeilleure || provider.estPersonnalise) ...[
                     const SizedBox(height: 4),
                     _Etiquette(
-                      texte: estActuel ? 'Votre offre' : 'Meilleure offre',
-                      couleur: estActuel ? colors.textSecondary : colors.savings,
+                      texte: estActuel
+                          ? 'Votre offre'
+                          : estMeilleure
+                              ? 'Meilleure offre'
+                              : 'Saisi par vous',
+                      couleur: estMeilleure && !estActuel
+                          ? colors.savings
+                          : colors.textSecondary,
                     ),
                   ],
                 ],
@@ -398,6 +439,100 @@ class _Etiquette extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
+      ),
+    );
+  }
+}
+
+class _AjoutPrestataire extends StatelessWidget {
+  const _AjoutPrestataire({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: TicketCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.add_circle_outline, size: 20, color: colors.accent),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Votre prestataire n\'est pas listé ?',
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Saisissez ses tarifs pour l\'ajouter à la comparaison.',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 13,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// L'invitation au déblocage, placée sous le tableau — après que
+/// l'utilisateur a vu ce qu'il manque, pas avant.
+class _AppelDeblocage extends StatelessWidget {
+  const _AppelDeblocage({required this.nombreMasque, required this.onTap});
+
+  final int nombreMasque;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return TicketCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            nombreMasque > 1
+                ? 'Voir le coût de ces $nombreMasque offres'
+                : "Voir le coût de cette offre",
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Débloquez la comparaison complète, l\'export PDF et la '
+            'sauvegarde pour 3,99 € — un seul paiement.',
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 13.5,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: onTap,
+              child: const Text('Débloquer pour 3,99 €'),
+            ),
+          ),
+        ],
       ),
     );
   }

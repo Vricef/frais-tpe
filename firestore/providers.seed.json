@@ -1,0 +1,73 @@
+{
+  "sumup": {
+    "nom": "SumUp",
+    "offre": "Sans abonnement",
+    "type": "processeurPaiement",
+    "frais_transaction_cb": 1.75,
+    "frais_mensuels": 0,
+    "cout_terminal_min": 39,
+    "derniere_maj": "2026-08-06"
+  },
+  "sumup_paiements_plus": {
+    "nom": "SumUp",
+    "offre": "Paiements Plus",
+    "type": "processeurPaiement",
+    "frais_transaction_cb": 0.89,
+    "frais_mensuels": 19,
+    "tarifs_additionnels": [
+      { "libelle": "Amex, cartes pro et hors UE", "taux": 1.75 },
+      { "libelle": "Paiement en ligne", "taux": 2.5 }
+    ],
+    "derniere_maj": "2026-08-06"
+  },
+  "zettle": {
+    "nom": "Zettle",
+    "offre": "PayPal POS",
+    "type": "processeurPaiement",
+    "frais_transaction_cb": 1.75,
+    "frais_mensuels": 0,
+    "tarifs_additionnels": [
+      { "libelle": "Paiement à distance", "taux": 2.5 }
+    ],
+    "cout_terminal_min": 29,
+    "cout_terminal_max": 199,
+    "derniere_maj": "2026-08-06"
+  },
+  "stripe_terminal": {
+    "nom": "Stripe",
+    "offre": "Terminal",
+    "type": "processeurPaiement",
+    "frais_transaction_cb": 1.4,
+    "frais_fixe_transaction": 0.1,
+    "frais_mensuels": 0,
+    "tarifs_additionnels": [
+      { "libelle": "Cartes hors EEE", "taux": 2.9, "frais_fixe": 0.1 }
+    ],
+    "cout_terminal_min": 59,
+    "cout_terminal_max": 199,
+    "derniere_maj": "2026-08-06"
+  },
+  "mypos": {
+    "nom": "myPOS",
+    "type": "processeurPaiement",
+    "frais_transaction_cb": 1.69,
+    "frais_fixe_transaction": 0.05,
+    "frais_mensuels": 0,
+    "tarifs_additionnels": [
+      { "libelle": "Cartes professionnelles", "taux": 2.5, "frais_fixe": 0.05 },
+      { "libelle": "Cartes hors SEPA", "taux": 2.85, "frais_fixe": 0.05 }
+    ],
+    "cout_terminal_min": 29,
+    "cout_terminal_max": 249,
+    "derniere_maj": "2026-08-06"
+  },
+  "square": {
+    "nom": "Square",
+    "type": "processeurPaiement",
+    "frais_transaction_cb": 1.65,
+    "frais_mensuels": 0,
+    "cout_terminal_min": 165,
+    "cout_terminal_max": 165,
+    "derniere_maj": "2026-08-06"
+  }
+}

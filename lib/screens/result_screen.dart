@@ -5,11 +5,14 @@ import '../models/fee_breakdown.dart';
 import '../models/provider.dart';
 import '../services/entitlement.dart';
 import '../services/fee_calculator.dart';
+import '../services/pdf_report_service.dart';
+import '../services/report_sharing.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/comparison_gauge.dart';
 import '../widgets/ticket_card.dart';
 import 'comparison_table_screen.dart';
+import 'paywall_screen.dart';
 
 /// Écran 3 du parcours (§8) : le résultat de la comparaison.
 ///
@@ -26,6 +29,8 @@ class ResultScreen extends StatelessWidget {
     required this.entitlement,
     this.panierMoyen,
     this.calculator = const FeeCalculator(),
+    this.pdfService = const PdfReportService(),
+    this.sharing = const PrintingReportSharing(),
   });
 
   final double volumeMensuel;
@@ -37,6 +42,8 @@ class ResultScreen extends StatelessWidget {
   final List<TpeProvider> providers;
   final FeeCalculator calculator;
   final Entitlement entitlement;
+  final PdfReportService pdfService;
+  final ReportSharing sharing;
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +80,9 @@ class ResultScreen extends StatelessWidget {
                   providers: providers,
                   providerActuel: providerActuel,
                   entitlement: entitlement,
+                  calculator: calculator,
+                  pdfService: pdfService,
+                  sharing: sharing,
                 ),
               ],
             ],
@@ -127,6 +137,9 @@ class _CarteResultat extends StatelessWidget {
     required this.providers,
     required this.providerActuel,
     required this.entitlement,
+    required this.calculator,
+    required this.pdfService,
+    required this.sharing,
   });
 
   final ComparisonResult resultat;
@@ -135,6 +148,9 @@ class _CarteResultat extends StatelessWidget {
   final List<TpeProvider> providers;
   final TpeProvider providerActuel;
   final Entitlement entitlement;
+  final FeeCalculator calculator;
+  final PdfReportService pdfService;
+  final ReportSharing sharing;
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +174,9 @@ class _CarteResultat extends StatelessWidget {
           ],
           const SizedBox(height: 16),
           _EncartEconomie(resultat: resultat),
-          if (resultat.ecartParPoste.isNotEmpty) ...[
+          // Le détail explique une économie : hors de propos quand il n'y
+          // en a pas, où il ne listerait que des écarts défavorables.
+          if (!resultat.dejaOptimal && resultat.ecartParPoste.isNotEmpty) ...[
             const SizedBox(height: 18),
             Text(
               "D'OÙ VIENT L'ÉCART",
@@ -175,18 +193,15 @@ class _CarteResultat extends StatelessWidget {
             ],
           ],
           const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                // L'export PDF est une fonctionnalité débloquée par
-                // l'achat unique (§4) — écran paywall à venir.
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Export PDF — à venir')),
-                );
-              },
-              child: const Text('Recevoir le détail en PDF'),
-            ),
+          _BoutonPdf(
+            resultat: resultat,
+            volumeMensuel: volumeMensuel,
+            panierMoyen: panierMoyen,
+            providers: providers,
+            entitlement: entitlement,
+            calculator: calculator,
+            pdfService: pdfService,
+            sharing: sharing,
           ),
           const SizedBox(height: 8),
           Center(
@@ -214,6 +229,117 @@ class _CarteResultat extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Le bouton d'export PDF, verrouillé tant que l'achat n'est pas fait
+/// (§4). Non débloqué, il mène au paywall plutôt que de se griser : un
+/// bouton inerte n'explique rien.
+class _BoutonPdf extends StatefulWidget {
+  const _BoutonPdf({
+    required this.resultat,
+    required this.volumeMensuel,
+    required this.panierMoyen,
+    required this.providers,
+    required this.entitlement,
+    required this.calculator,
+    required this.pdfService,
+    required this.sharing,
+  });
+
+  final ComparisonResult resultat;
+  final double volumeMensuel;
+  final double? panierMoyen;
+  final List<TpeProvider> providers;
+  final Entitlement entitlement;
+  final FeeCalculator calculator;
+  final PdfReportService pdfService;
+  final ReportSharing sharing;
+
+  @override
+  State<_BoutonPdf> createState() => _BoutonPdfState();
+}
+
+class _BoutonPdfState extends State<_BoutonPdf> {
+  bool _enCours = false;
+
+  Future<void> _appuyer() async {
+    if (!widget.entitlement.estDebloque) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PaywallScreen(entitlement: widget.entitlement),
+        ),
+      );
+      // Au retour, si l'achat vient d'être fait, on enchaîne sur l'export
+      // plutôt que d'obliger à ré-appuyer.
+      if (!mounted || !widget.entitlement.estDebloque) return;
+    }
+    await _exporter();
+  }
+
+  Future<void> _exporter() async {
+    setState(() => _enCours = true);
+    try {
+      final classement = widget.calculator.classer(
+        providers: widget.providers,
+        volumeMensuel: widget.volumeMensuel,
+        panierMoyen: widget.panierMoyen,
+      );
+      final document = await widget.pdfService.construire(
+        resultat: widget.resultat,
+        classement: classement,
+        volumeMensuel: widget.volumeMensuel,
+        panierMoyen: widget.panierMoyen,
+      );
+      await widget.sharing.partager(
+        document: document,
+        nomFichier: 'frais-tpe-rapport.pdf',
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Le rapport n'a pas pu être créé. Réessayez."),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _enCours = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return ValueListenableBuilder<bool>(
+      valueListenable: widget.entitlement,
+      builder: (context, deverrouille, _) {
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _enCours ? null : _appuyer,
+            child: _enCours
+                ? SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.onPrimary,
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (!deverrouille) ...[
+                        Icon(Icons.lock_outline, size: 16, color: colors.onPrimary),
+                        const SizedBox(width: 8),
+                      ],
+                      const Text('Recevoir le détail en PDF'),
+                    ],
+                  ),
+          ),
+        );
+      },
     );
   }
 }
@@ -297,20 +423,29 @@ class _LigneEcart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // Un poste sur lequel la nouvelle offre coûte plus cher doit se lire
+    // comme tel : sans le signe, un abonnement plus élevé passerait pour
+    // une économie et le détail ne tomberait pas juste.
+    final economise = ligne.montantMensuel >= 0;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            ligne.libelle,
-            style: TextStyle(color: colors.textPrimary, fontSize: 14),
+          Expanded(
+            child: Text(
+              ligne.libelle,
+              style: TextStyle(color: colors.textPrimary, fontSize: 14),
+            ),
           ),
+          const SizedBox(width: 10),
           Text(
-            '- ${format.format(ligne.montantMensuel)}',
+            '${economise ? '-' : '+'} '
+            '${format.format(ligne.montantMensuel.abs())}',
             style: context.amountStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
+              color: economise ? colors.textPrimary : colors.textSecondary,
             ),
           ),
         ],

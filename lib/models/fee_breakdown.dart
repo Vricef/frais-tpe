@@ -9,8 +9,12 @@ class FeeLine {
 
   final String libelle;
 
-  /// Montant mensuel en euros (toujours positif ; l'écran l'affiche
-  /// précédé du signe adéquat).
+  /// Montant mensuel en euros.
+  ///
+  /// Sur une ligne de coût, toujours positif. Sur une ligne d'écart
+  /// ([ComparisonResult.ecartParPoste]), le signe porte le sens : positif
+  /// quand la nouvelle offre coûte moins cher sur ce poste, négatif quand
+  /// elle coûte davantage.
   final double montantMensuel;
 }
 

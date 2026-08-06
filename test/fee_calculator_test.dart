@@ -183,7 +183,7 @@ void main() {
       expect(result!.optimise.provider.id, 'zettle');
     });
 
-    test('signale une situation déjà optimale sans écart négatif affiché', () {
+    test('signale une situation déjà optimale', () {
       final result = calculator.comparer(
         actuel: _fintech(id: 'actuel', commission: 1.0),
         candidats: [_fintech(id: 'autre', commission: 2.0)],
@@ -191,7 +191,64 @@ void main() {
       );
 
       expect(result!.dejaOptimal, isTrue);
-      expect(result.ecartParPoste, isEmpty);
+      expect(result.economieMensuelle, closeTo(-10, 0.001));
+
+      // Les écarts restent calculés — ils décrivent fidèlement la
+      // différence, ici en défaveur de l'alternative. C'est à l'affichage
+      // de ne pas présenter cela comme une économie.
+      final somme = result.ecartParPoste.fold<double>(
+        0,
+        (total, l) => total + l.montantMensuel,
+      );
+      expect(somme, closeTo(result.economieMensuelle, 0.001));
+      expect(result.ecartParPoste.every((l) => l.montantMensuel < 0), isTrue);
+    });
+
+    test("la somme des écarts égale toujours l'économie annoncée", () {
+      // Cas réel : SumUp Paiements Plus est moins cher au total malgré un
+      // abonnement plus élevé. Si le détail omettait les postes où la
+      // nouvelle offre coûte davantage, il afficherait 36,12 € là où
+      // l'économie est de 26,12 € — et le lecteur qui vérifie trouverait
+      // un total faux.
+      final result = calculator.comparer(
+        actuel: _fintech(id: 'actuel', commission: 1.75, mensuel: 9),
+        candidats: [_fintech(id: 'sumup_plus', commission: 0.89, mensuel: 19)],
+        volumeMensuel: 4200,
+      )!;
+
+      final somme = result.ecartParPoste.fold<double>(
+        0,
+        (total, l) => total + l.montantMensuel,
+      );
+      expect(somme, closeTo(result.economieMensuelle, 0.001));
+      expect(result.economieMensuelle, closeTo(26.12, 0.001));
+
+      final abonnement =
+          result.ecartParPoste.firstWhere((l) => l.libelle == 'Abonnement mensuel');
+      expect(
+        abonnement.montantMensuel,
+        closeTo(-10, 0.001),
+        reason: 'un poste plus cher doit apparaître avec un écart négatif',
+      );
+    });
+
+    test('un poste absent de l\'offre actuelle apparaît dans l\'écart', () {
+      // La nouvelle offre facture un frais fixe que l'actuelle n'a pas :
+      // sans union des deux listes, ce poste serait invisible.
+      final result = calculator.comparer(
+        actuel: _fintech(id: 'actuel', commission: 2.0),
+        candidats: [_fintech(id: 'autre', commission: 1.0, fraisFixe: 0.10)],
+        volumeMensuel: 3500,
+      )!;
+
+      final libelles = result.ecartParPoste.map((l) => l.libelle);
+      expect(libelles, contains('Frais fixe par transaction'));
+
+      final somme = result.ecartParPoste.fold<double>(
+        0,
+        (total, l) => total + l.montantMensuel,
+      );
+      expect(somme, closeTo(result.economieMensuelle, 0.001));
     });
 
     test("détaille l'écart poste par poste, du plus gros au plus petit", () {

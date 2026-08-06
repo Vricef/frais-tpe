@@ -148,23 +148,48 @@ class FeeCalculator {
   }
 
   /// Écart poste par poste entre deux offres, pour le bloc "D'où vient
-  /// l'écart". Seuls les postes où l'on économise sont listés : le but est
-  /// d'expliquer le gain, pas de dresser un bilan comptable.
+  /// l'écart".
+  ///
+  /// Tous les postes qui diffèrent sont listés, y compris ceux où la
+  /// nouvelle offre coûte plus cher : la somme des écarts doit égaler
+  /// l'économie annoncée. Ne montrer que les gains donnerait un détail qui
+  /// ne tombe pas juste — un abonnement plus élevé compensé par une
+  /// commission plus basse disparaîtrait, et le lecteur qui vérifie
+  /// trouverait un total faux.
+  ///
+  /// Les postes absents d'une des deux offres comptent pour zéro de ce
+  /// côté : une offre sans abonnement face à une offre à 19 € doit faire
+  /// apparaître ces 19 €.
   List<FeeLine> _ecartParPoste(FeeBreakdown actuel, FeeBreakdown optimise) {
+    final parLibelleActuel = {
+      for (final l in actuel.lignes) l.libelle: l.montantMensuel,
+    };
     final parLibelleOptimise = {
       for (final l in optimise.lignes) l.libelle: l.montantMensuel,
     };
 
+    // L'ordre des postes de l'offre actuelle d'abord, puis ceux qui
+    // n'existent que dans la nouvelle offre.
+    final libelles = <String>[
+      ...actuel.lignes.map((l) => l.libelle),
+      ...optimise.lignes
+          .map((l) => l.libelle)
+          .where((l) => !parLibelleActuel.containsKey(l)),
+    ];
+
     final ecarts = <FeeLine>[];
-    for (final ligne in actuel.lignes) {
-      final montantOptimise = parLibelleOptimise[ligne.libelle] ?? 0;
-      final ecart = ligne.montantMensuel - montantOptimise;
-      if (ecart > 0.005) {
-        ecarts.add(FeeLine(libelle: ligne.libelle, montantMensuel: ecart));
+    for (final libelle in libelles) {
+      final ecart =
+          (parLibelleActuel[libelle] ?? 0) - (parLibelleOptimise[libelle] ?? 0);
+      if (ecart.abs() > 0.005) {
+        ecarts.add(FeeLine(libelle: libelle, montantMensuel: ecart));
       }
     }
 
-    ecarts.sort((a, b) => b.montantMensuel.compareTo(a.montantMensuel));
+    // Du poste le plus marquant au moins marquant, quel que soit son sens.
+    ecarts.sort(
+      (a, b) => b.montantMensuel.abs().compareTo(a.montantMensuel.abs()),
+    );
     return ecarts;
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frais_tpe/models/provider.dart';
 import 'package:frais_tpe/screens/comparison_table_screen.dart';
+import 'package:frais_tpe/services/entitlement.dart';
 import 'package:frais_tpe/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 
@@ -34,13 +35,17 @@ const _banque = TpeProvider(
   fourchetteMax: 1.6,
 );
 
-Widget _wrap({List<TpeProvider> providers = const [_actuel, _meilleur]}) {
+Widget _wrap({
+  List<TpeProvider> providers = const [_actuel, _meilleur],
+  bool debloque = true,
+}) {
   return MaterialApp(
     theme: AppTheme.light,
     home: ComparisonTableScreen(
       volumeMensuel: 1000,
       providers: providers,
       providerActuel: _actuel,
+      entitlement: Entitlement(debloque: debloque),
     ),
   );
 }

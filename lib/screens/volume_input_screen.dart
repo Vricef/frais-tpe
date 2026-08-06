@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../models/provider.dart';
+import '../services/entitlement.dart';
 import '../services/fee_calculator.dart';
 import '../services/firestore_service.dart';
 import '../theme/app_colors.dart';
@@ -16,7 +17,13 @@ import 'result_screen.dart';
 /// Un seul chiffre obligatoire : c'est le point de friction principal du
 /// parcours, tout le reste est optionnel.
 class VolumeInputScreen extends StatefulWidget {
-  const VolumeInputScreen({super.key, this.firestoreService});
+  const VolumeInputScreen({
+    super.key,
+    required this.entitlement,
+    this.firestoreService,
+  });
+
+  final Entitlement entitlement;
 
   /// Injectable pour les tests ; par défaut, l'instance Firestore réelle.
   final FirestoreService? firestoreService;
@@ -101,6 +108,7 @@ class _VolumeInputScreenState extends State<VolumeInputScreen> {
           panierMoyen: _panierMoyen,
           providerActuel: actuel,
           providers: _providers,
+          entitlement: widget.entitlement,
         ),
       ),
     );

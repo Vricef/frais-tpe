@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'screens/home_screen.dart';
+import 'services/entitlement.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -11,11 +12,15 @@ Future<void> main() async {
   // grilles tarifaires) : sans ça, le formatage lève une exception.
   await initializeDateFormatting('fr_FR');
   await Firebase.initializeApp();
-  runApp(const FraisTpeApp());
+  runApp(FraisTpeApp());
 }
 
 class FraisTpeApp extends StatelessWidget {
-  const FraisTpeApp({super.key});
+  FraisTpeApp({super.key, Entitlement? entitlement})
+      : entitlement = entitlement ?? Entitlement();
+
+  /// État du déblocage par achat unique, partagé par tous les écrans.
+  final Entitlement entitlement;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +31,7 @@ class FraisTpeApp extends StatelessWidget {
       darkTheme: AppTheme.dark,
       // Suit le réglage clair/sombre du téléphone.
       themeMode: ThemeMode.system,
-      home: const HomeScreen(),
+      home: HomeScreen(entitlement: entitlement),
     );
   }
 }

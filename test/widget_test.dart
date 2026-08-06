@@ -4,7 +4,7 @@ import 'package:frais_tpe/main.dart';
 
 void main() {
   testWidgets('FraisTpeApp affiche le titre', (WidgetTester tester) async {
-    await tester.pumpWidget(const FraisTpeApp());
+    await tester.pumpWidget(FraisTpeApp());
 
     expect(find.text('Frais TPE'), findsOneWidget);
   });

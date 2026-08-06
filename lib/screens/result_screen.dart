@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../models/fee_breakdown.dart';
 import '../models/provider.dart';
+import '../services/entitlement.dart';
 import '../services/fee_calculator.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -22,6 +23,7 @@ class ResultScreen extends StatelessWidget {
     required this.volumeMensuel,
     required this.providerActuel,
     required this.providers,
+    required this.entitlement,
     this.panierMoyen,
     this.calculator = const FeeCalculator(),
   });
@@ -34,6 +36,7 @@ class ResultScreen extends StatelessWidget {
   final TpeProvider providerActuel;
   final List<TpeProvider> providers;
   final FeeCalculator calculator;
+  final Entitlement entitlement;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +72,7 @@ class ResultScreen extends StatelessWidget {
                   panierMoyen: panierMoyen,
                   providers: providers,
                   providerActuel: providerActuel,
+                  entitlement: entitlement,
                 ),
               ],
             ],
@@ -122,6 +126,7 @@ class _CarteResultat extends StatelessWidget {
     required this.panierMoyen,
     required this.providers,
     required this.providerActuel,
+    required this.entitlement,
   });
 
   final ComparisonResult resultat;
@@ -129,6 +134,7 @@ class _CarteResultat extends StatelessWidget {
   final double? panierMoyen;
   final List<TpeProvider> providers;
   final TpeProvider providerActuel;
+  final Entitlement entitlement;
 
   @override
   Widget build(BuildContext context) {
@@ -193,6 +199,7 @@ class _CarteResultat extends StatelessWidget {
                       providers: providers,
                       providerActuel: providerActuel,
                       panierMoyen: panierMoyen,
+                      entitlement: entitlement,
                     ),
                   ),
                 );

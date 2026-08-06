@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/entitlement.dart';
 import '../theme/app_colors.dart';
 import '../widgets/ticket_card.dart';
 import 'volume_input_screen.dart';
@@ -10,7 +11,9 @@ import 'volume_input_screen.dart';
 /// Ton chaleureux et rassurant : la cible n'est pas technophile, la
 /// promesse doit tenir en une phrase et le premier geste être évident.
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.entitlement});
+
+  final Entitlement entitlement;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +87,8 @@ class HomeScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => const VolumeInputScreen(),
+                        builder: (_) =>
+                            VolumeInputScreen(entitlement: entitlement),
                       ),
                     );
                   },

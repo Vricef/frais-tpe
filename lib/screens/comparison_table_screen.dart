@@ -3,10 +3,13 @@ import 'package:intl/intl.dart';
 
 import '../models/fee_breakdown.dart';
 import '../models/provider.dart';
+import '../services/entitlement.dart';
 import '../services/fee_calculator.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/masked_amount.dart';
 import '../widgets/ticket_card.dart';
+import 'paywall_screen.dart';
 import 'provider_detail_screen.dart';
 
 /// Écran 3 bis du parcours (§8) : le tableau comparatif de toutes les
@@ -21,6 +24,7 @@ class ComparisonTableScreen extends StatelessWidget {
     required this.volumeMensuel,
     required this.providers,
     required this.providerActuel,
+    required this.entitlement,
     this.panierMoyen,
     this.calculator = const FeeCalculator(),
   });
@@ -30,6 +34,47 @@ class ComparisonTableScreen extends StatelessWidget {
   final TpeProvider providerActuel;
   final double? panierMoyen;
   final FeeCalculator calculator;
+
+  /// Tant que l'achat n'est pas fait, seuls le prestataire actuel et la
+  /// meilleure offre affichent leur coût (§4 : la version gratuite
+  /// compare un seul prestataire).
+  final Entitlement entitlement;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: entitlement,
+      builder: (context, deverrouille, _) => _Tableau(
+        volumeMensuel: volumeMensuel,
+        providers: providers,
+        providerActuel: providerActuel,
+        panierMoyen: panierMoyen,
+        calculator: calculator,
+        entitlement: entitlement,
+        deverrouille: deverrouille,
+      ),
+    );
+  }
+}
+
+class _Tableau extends StatelessWidget {
+  const _Tableau({
+    required this.volumeMensuel,
+    required this.providers,
+    required this.providerActuel,
+    required this.panierMoyen,
+    required this.calculator,
+    required this.entitlement,
+    required this.deverrouille,
+  });
+
+  final double volumeMensuel;
+  final List<TpeProvider> providers;
+  final TpeProvider providerActuel;
+  final double? panierMoyen;
+  final FeeCalculator calculator;
+  final Entitlement entitlement;
+  final bool deverrouille;
 
   @override
   Widget build(BuildContext context) {
@@ -82,22 +127,27 @@ class ComparisonTableScreen extends StatelessWidget {
                     children: [
                       for (var i = 0; i < classement.length; i++) ...[
                         if (i > 0) const TicketPerforation(),
-                        _LigneOffre(
-                          rang: i + 1,
-                          breakdown: classement[i],
-                          estActuel:
-                              classement[i].provider.id == providerActuel.id,
-                          estMeilleure: i == 0,
-                          coutActuel: coutActuel,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => ProviderDetailScreen(
-                                  provider: classement[i].provider,
-                                  volumeMensuel: volumeMensuel,
-                                  panierMoyen: panierMoyen,
-                                ),
-                              ),
+                        Builder(
+                          builder: (context) {
+                            // En gratuit, seules la meilleure offre et
+                            // celle de l'utilisateur sont chiffrées.
+                            final verrouille = !deverrouille &&
+                                i > 0 &&
+                                classement[i].provider.id != providerActuel.id;
+                            return _LigneOffre(
+                              rang: i + 1,
+                              breakdown: classement[i],
+                              estActuel: classement[i].provider.id ==
+                                  providerActuel.id,
+                              estMeilleure: i == 0,
+                              coutActuel: coutActuel,
+                              verrouille: verrouille,
+                              // Une ligne verrouillée ne doit pas ouvrir la
+                              // fiche : elle y afficherait le coût exact,
+                              // contournant le masquage du tableau.
+                              onTap: () => verrouille
+                                  ? _ouvrirPaywall(context)
+                                  : _ouvrirFiche(context, classement[i]),
                             );
                           },
                         ),
@@ -105,6 +155,13 @@ class ComparisonTableScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+              if (!deverrouille && classement.length > 2) ...[
+                const SizedBox(height: 16),
+                _AppelDeblocage(
+                  nombreMasque: _nombreMasque(classement),
+                  onTap: () => _ouvrirPaywall(context),
+                ),
+              ],
               if (contientEstimation) ...[
                 const SizedBox(height: 14),
                 _LegendeEstimation(),
@@ -112,6 +169,80 @@ class ComparisonTableScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  int _nombreMasque(List<FeeBreakdown> classement) {
+    var n = 0;
+    for (var i = 0; i < classement.length; i++) {
+      if (i > 0 && classement[i].provider.id != providerActuel.id) n++;
+    }
+    return n;
+  }
+
+  void _ouvrirPaywall(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PaywallScreen(entitlement: entitlement),
+      ),
+    );
+  }
+
+  void _ouvrirFiche(BuildContext context, FeeBreakdown breakdown) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ProviderDetailScreen(
+          provider: breakdown.provider,
+          volumeMensuel: volumeMensuel,
+          panierMoyen: panierMoyen,
+        ),
+      ),
+    );
+  }
+}
+
+/// L'invitation au déblocage, placée sous le tableau — après que
+/// l'utilisateur a vu ce qu'il manque, pas avant.
+class _AppelDeblocage extends StatelessWidget {
+  const _AppelDeblocage({required this.nombreMasque, required this.onTap});
+
+  final int nombreMasque;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return TicketCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            nombreMasque > 1
+                ? 'Voir le coût des $nombreMasque autres offres'
+                : "Voir le coût de l'autre offre",
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Débloquez la comparaison complète, l\'export PDF et la '
+            'sauvegarde pour 3,99 € — un seul paiement.',
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 13.5,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: onTap,
+              child: const Text('Débloquer pour 3,99 €'),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -126,6 +257,7 @@ class _LigneOffre extends StatelessWidget {
     required this.estActuel,
     required this.estMeilleure,
     required this.coutActuel,
+    required this.verrouille,
     required this.onTap,
   });
 
@@ -134,6 +266,7 @@ class _LigneOffre extends StatelessWidget {
   final bool estActuel;
   final bool estMeilleure;
   final double? coutActuel;
+  final bool verrouille;
   final VoidCallback onTap;
 
   @override
@@ -141,13 +274,23 @@ class _LigneOffre extends StatelessWidget {
     final colors = context.colors;
     final provider = breakdown.provider;
 
+    // Sur une ligne verrouillée, le montant n'est jamais mis en forme : la
+    // valeur ne doit exister ni dans l'arbre de widgets, ni dans l'arbre
+    // de sémantique lu par les lecteurs d'écran.
+    //
     // Les banques n'ont pas de tarif public : leur coût est une estimation
-    // au milieu de la fourchette, signalée par « ≈ ».
-    final estime = !provider.aTarifsFixes;
-    final montant =
-        '${estime ? '≈ ' : ''}${_formatEuro.format(breakdown.totalMensuel)}';
+    // au milieu de la fourchette, signalée par « ≈ ». Ce marqueur disparaît
+    // lui aussi quand la ligne est verrouillée — les placeholders doivent
+    // être strictement identiques d'une ligne à l'autre.
+    final montant = verrouille
+        ? null
+        : '${provider.aTarifsFixes ? '' : '≈ '}'
+            '${_formatEuro.format(breakdown.totalMensuel)}';
 
-    final ecart = coutActuel == null || estActuel
+    // L'écart est masqué pour la même raison : il donne directement le
+    // montant caché, par soustraction avec le coût actuel affiché
+    // au-dessus.
+    final ecart = coutActuel == null || estActuel || verrouille
         ? null
         : breakdown.totalMensuel - coutActuel!;
 
@@ -196,13 +339,16 @@ class _LigneOffre extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  montant,
-                  style: context.amountStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
+                if (montant == null)
+                  const MaskedAmount()
+                else
+                  Text(
+                    montant,
+                    style: context.amountStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
                 if (ecart != null) ...[
                   const SizedBox(height: 3),
                   Text(
@@ -219,7 +365,11 @@ class _LigneOffre extends StatelessWidget {
               ],
             ),
             const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 18, color: colors.textSecondary),
+            Icon(
+              verrouille ? Icons.lock_outline : Icons.chevron_right,
+              size: verrouille ? 15 : 18,
+              color: colors.textSecondary,
+            ),
           ],
         ),
       ),

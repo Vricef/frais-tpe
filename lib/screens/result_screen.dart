@@ -8,6 +8,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/comparison_gauge.dart';
 import '../widgets/ticket_card.dart';
+import 'provider_detail_screen.dart';
 
 /// Écran 3 du parcours (§8) : le résultat de la comparaison.
 ///
@@ -21,10 +22,15 @@ class ResultScreen extends StatelessWidget {
     required this.volumeMensuel,
     required this.providerActuel,
     required this.providers,
+    this.panierMoyen,
     this.calculator = const FeeCalculator(),
   });
 
   final double volumeMensuel;
+
+  /// Panier moyen saisi par l'utilisateur ; `null` = valeur par défaut.
+  final double? panierMoyen;
+
   final TpeProvider providerActuel;
   final List<TpeProvider> providers;
   final FeeCalculator calculator;
@@ -35,6 +41,7 @@ class ResultScreen extends StatelessWidget {
       actuel: providerActuel,
       candidats: providers,
       volumeMensuel: volumeMensuel,
+      panierMoyen: panierMoyen,
     );
 
     final formatVolume = NumberFormat.decimalPattern('fr_FR');
@@ -56,7 +63,11 @@ class ResultScreen extends StatelessWidget {
               else ...[
                 _Titre(resultat: resultat),
                 const SizedBox(height: 20),
-                _CarteResultat(resultat: resultat),
+                _CarteResultat(
+                  resultat: resultat,
+                  volumeMensuel: volumeMensuel,
+                  panierMoyen: panierMoyen,
+                ),
               ],
             ],
           ),
@@ -93,7 +104,7 @@ class _Titre extends StatelessWidget {
           const TextSpan(text: 'Vous payez '),
           TextSpan(
             text: format.format(resultat.economieMensuelle),
-            style: TextStyle(color: colors.primary),
+            style: TextStyle(color: colors.accent),
           ),
           const TextSpan(text: ' de trop chaque mois.'),
         ],
@@ -103,9 +114,15 @@ class _Titre extends StatelessWidget {
 }
 
 class _CarteResultat extends StatelessWidget {
-  const _CarteResultat({required this.resultat});
+  const _CarteResultat({
+    required this.resultat,
+    required this.volumeMensuel,
+    required this.panierMoyen,
+  });
 
   final ComparisonResult resultat;
+  final double volumeMensuel;
+  final double? panierMoyen;
 
   @override
   Widget build(BuildContext context) {
@@ -159,11 +176,24 @@ class _CarteResultat extends StatelessWidget {
               child: const Text('Recevoir le détail en PDF'),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Center(
-            child: Text(
-              'Voir les offres comparées',
-              style: TextStyle(color: colors.textSecondary, fontSize: 13.5),
+            child: TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ProviderDetailScreen(
+                      provider: resultat.optimise.provider,
+                      volumeMensuel: volumeMensuel,
+                      panierMoyen: panierMoyen,
+                    ),
+                  ),
+                );
+              },
+              child: Text(
+                'Voir la fiche de ${resultat.optimise.provider.nom}',
+                style: TextStyle(color: colors.textSecondary, fontSize: 13.5),
+              ),
             ),
           ),
         ],
@@ -185,7 +215,7 @@ class _NoteHachure extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, size: 17, color: colors.primary),
+          Icon(Icons.info_outline, size: 17, color: colors.accent),
           const SizedBox(width: 9),
           Expanded(
             child: Text(

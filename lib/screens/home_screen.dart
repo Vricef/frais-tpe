@@ -131,7 +131,7 @@ class _Argument extends StatelessWidget {
             color: colors.surfaceAlt,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icone, size: 19, color: colors.primary),
+          child: Icon(icone, size: 19, color: colors.accent),
         ),
         const SizedBox(width: 14),
         Expanded(

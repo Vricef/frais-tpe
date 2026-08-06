@@ -83,7 +83,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: colors.primary, width: 2),
+          borderSide: BorderSide(color: colors.accent, width: 2),
         ),
       ),
     );

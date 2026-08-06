@@ -4,6 +4,13 @@ import 'package:flutter/material.dart';
 /// autres teintes (surfaces, tracks, dividers) sont dérivées de celles-ci.
 class _Palette {
   static const terreCuite = Color(0xFFB85A32);
+
+  /// Terre cuite éclaircie, réservée au mode sombre pour le texte et les
+  /// icônes : le terre cuite d'origine ne donne que 4,0:1 sur le fond
+  /// sombre, insuffisant hors gros titres. Cette variante monte à 6,7:1.
+  /// Les aplats (boutons) gardent le terre cuite d'origine, dont le texte
+  /// blanc perdrait en lisibilité sur un fond plus clair.
+  static const terreCuiteClaire = Color(0xFFE08355);
   static const vertEpargne = Color(0xFF3F7A5E);
   static const encre = Color(0xFF1C1A17);
   static const grisChaud = Color(0xFF6E675E);
@@ -29,6 +36,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.primary,
     required this.primaryDark,
     required this.onPrimary,
+    required this.accent,
     required this.textPrimary,
     required this.textSecondary,
     required this.track,
@@ -45,9 +53,16 @@ class AppColors extends ThemeExtension<AppColors> {
   /// [surface] et [track].
   final Color surfaceAlt;
 
+  /// Terre cuite des aplats : boutons, pastilles, puces sélectionnées.
+  /// Toujours associé à [onPrimary].
   final Color primary;
   final Color primaryDark;
   final Color onPrimary;
+
+  /// Terre cuite du texte et des icônes posés sur un fond de l'app.
+  /// Identique à [primary] en clair, éclairci en sombre pour garder un
+  /// contraste suffisant.
+  final Color accent;
 
   final Color textPrimary;
   final Color textSecondary;
@@ -74,6 +89,7 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? primary,
     Color? primaryDark,
     Color? onPrimary,
+    Color? accent,
     Color? textPrimary,
     Color? textSecondary,
     Color? track,
@@ -89,6 +105,7 @@ class AppColors extends ThemeExtension<AppColors> {
       primary: primary ?? this.primary,
       primaryDark: primaryDark ?? this.primaryDark,
       onPrimary: onPrimary ?? this.onPrimary,
+      accent: accent ?? this.accent,
       textPrimary: textPrimary ?? this.textPrimary,
       textSecondary: textSecondary ?? this.textSecondary,
       track: track ?? this.track,
@@ -109,6 +126,7 @@ class AppColors extends ThemeExtension<AppColors> {
       primary: Color.lerp(primary, other.primary, t)!,
       primaryDark: Color.lerp(primaryDark, other.primaryDark, t)!,
       onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
+      accent: Color.lerp(accent, other.accent, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
       track: Color.lerp(track, other.track, t)!,
@@ -126,6 +144,7 @@ class AppColors extends ThemeExtension<AppColors> {
     primary: _Palette.terreCuite,
     primaryDark: Color(0xFF9C4B29),
     onPrimary: Color(0xFFFFFFFF),
+    accent: _Palette.terreCuite,
     textPrimary: _Palette.encre,
     textSecondary: _Palette.grisChaud,
     track: Color(0xFFE4DDD0),
@@ -142,10 +161,13 @@ class AppColors extends ThemeExtension<AppColors> {
     primary: _Palette.terreCuite,
     primaryDark: Color(0xFF9C4B29),
     onPrimary: Color(0xFFFFFFFF),
+    accent: _Palette.terreCuiteClaire,
     textPrimary: _Palette.papier,
     textSecondary: Color(0xFF9C9488),
     track: Color(0xFF332E22),
-    hachure: _Palette.terreCuite,
+    // Éclaircie aussi : les hachures sur le track sombre tombaient à
+    // 2,9:1, sous le seuil de 3:1 des éléments graphiques.
+    hachure: _Palette.terreCuiteClaire,
     savings: Color(0xFF57A67D),
     savingsSurface: Color(0xFF1E3327),
     divider: Color(0xFF2E2A20),

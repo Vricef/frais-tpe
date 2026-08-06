@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../services/calculation_store.dart';
 import '../services/entitlement.dart';
 import '../theme/app_colors.dart';
 import '../widgets/ticket_card.dart';
+import 'history_screen.dart';
 import 'volume_input_screen.dart';
 
 /// Écran 1 du parcours (cahier des charges §8) : présentation rapide de
@@ -11,9 +13,14 @@ import 'volume_input_screen.dart';
 /// Ton chaleureux et rassurant : la cible n'est pas technophile, la
 /// promesse doit tenir en une phrase et le premier geste être évident.
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.entitlement});
+  const HomeScreen({
+    super.key,
+    required this.entitlement,
+    required this.store,
+  });
 
   final Entitlement entitlement;
+  final CalculationStore store;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +35,25 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              const TicketHeader(),
+              Row(
+                children: [
+                  const Expanded(child: TicketHeader()),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => HistoryScreen(
+                            store: store,
+                            entitlement: entitlement,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.bookmark_outline, color: colors.textSecondary),
+                    tooltip: 'Vos calculs',
+                  ),
+                ],
+              ),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
@@ -88,7 +113,10 @@ class HomeScreen extends StatelessWidget {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) =>
-                            VolumeInputScreen(entitlement: entitlement),
+                            VolumeInputScreen(
+                          entitlement: entitlement,
+                          store: store,
+                        ),
                       ),
                     );
                   },

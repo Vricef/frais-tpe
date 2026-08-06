@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Règles de sécurité Firestore de Frais TPE.
+//
+// L'app ne demande aucun compte (§3.1 : « aucune connexion bancaire »,
+// aucune inscription) et ne stocke aucune donnée d'utilisateur en ligne :
+// les calculs sauvegardés restent sur l'appareil. La base ne contient donc
+// que les grilles tarifaires, publiques par nature.
+//
+// Conséquence : lecture ouverte, écriture fermée. Les tarifs sont mis à
+// jour par le script d'import (firestore/seed_providers.js), qui passe par
+// un compte de service et contourne ces règles.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /providers/{providerId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Tout le reste est fermé : une collection ajoutée par erreur ne doit
+    // pas hériter d'un accès permissif.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

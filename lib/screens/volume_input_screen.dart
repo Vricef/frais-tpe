@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../models/provider.dart';
+import '../services/calculation_store.dart';
 import '../services/entitlement.dart';
 import '../services/fee_calculator.dart';
 import '../services/firestore_service.dart';
@@ -20,10 +21,12 @@ class VolumeInputScreen extends StatefulWidget {
   const VolumeInputScreen({
     super.key,
     required this.entitlement,
+    required this.store,
     this.firestoreService,
   });
 
   final Entitlement entitlement;
+  final CalculationStore store;
 
   /// Injectable pour les tests ; par défaut, l'instance Firestore réelle.
   final FirestoreService? firestoreService;
@@ -109,6 +112,7 @@ class _VolumeInputScreenState extends State<VolumeInputScreen> {
           providerActuel: actuel,
           providers: _providers,
           entitlement: widget.entitlement,
+          store: widget.store,
         ),
       ),
     );

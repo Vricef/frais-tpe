@@ -52,7 +52,6 @@ app.*.map.json
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
-.firebaserc
 
 # Variables d'environnement / secrets
 .env

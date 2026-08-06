@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'screens/home_screen.dart';
+import 'services/calculation_store.dart';
 import 'services/entitlement.dart';
 import 'theme/app_theme.dart';
 
@@ -16,11 +17,15 @@ Future<void> main() async {
 }
 
 class FraisTpeApp extends StatelessWidget {
-  FraisTpeApp({super.key, Entitlement? entitlement})
-      : entitlement = entitlement ?? Entitlement();
+  FraisTpeApp({super.key, Entitlement? entitlement, CalculationStore? store})
+      : entitlement = entitlement ?? Entitlement(),
+        store = store ?? PrefsCalculationStore();
 
   /// État du déblocage par achat unique, partagé par tous les écrans.
   final Entitlement entitlement;
+
+  /// Calculs sauvegardés, conservés localement sur l'appareil.
+  final CalculationStore store;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +36,7 @@ class FraisTpeApp extends StatelessWidget {
       darkTheme: AppTheme.dark,
       // Suit le réglage clair/sombre du téléphone.
       themeMode: ThemeMode.system,
-      home: HomeScreen(entitlement: entitlement),
+      home: HomeScreen(entitlement: entitlement, store: store),
     );
   }
 }

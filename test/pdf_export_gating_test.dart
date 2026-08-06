@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frais_tpe/models/provider.dart';
 import 'package:frais_tpe/screens/result_screen.dart';
+import 'package:frais_tpe/services/calculation_store.dart';
 import 'package:frais_tpe/services/entitlement.dart';
 import 'package:frais_tpe/services/report_sharing.dart';
 import 'package:frais_tpe/theme/app_theme.dart';
@@ -45,6 +46,7 @@ Widget _ecran(Entitlement entitlement, ReportSharing sharing) {
       providers: const [_actuel, _meilleur],
       entitlement: entitlement,
       sharing: sharing,
+      store: PrefsCalculationStore(prefs: null),
     ),
   );
 }

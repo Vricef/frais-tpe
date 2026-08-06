@@ -1,0 +1,13 @@
+{
+  "name": "frais-tpe-firestore",
+  "private": true,
+  "description": "Import des grilles tarifaires dans Firestore",
+  "scripts": {
+    "seed": "node seed_providers.js",
+    "seed:dry": "node seed_providers.js --dry-run",
+    "seed:emulateur": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 GCLOUD_PROJECT=frais-tpe node seed_providers.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}

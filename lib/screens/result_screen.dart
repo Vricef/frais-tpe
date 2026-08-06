@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 
 import '../models/fee_breakdown.dart';
 import '../models/provider.dart';
+import '../models/saved_calculation.dart';
+import '../services/calculation_store.dart';
 import '../services/entitlement.dart';
 import '../services/fee_calculator.dart';
 import '../services/pdf_report_service.dart';
@@ -10,6 +12,7 @@ import '../services/report_sharing.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/comparison_gauge.dart';
+import '../widgets/save_calculation_sheet.dart';
 import '../widgets/ticket_card.dart';
 import 'comparison_table_screen.dart';
 import 'paywall_screen.dart';
@@ -27,6 +30,7 @@ class ResultScreen extends StatelessWidget {
     required this.providerActuel,
     required this.providers,
     required this.entitlement,
+    required this.store,
     this.panierMoyen,
     this.calculator = const FeeCalculator(),
     this.pdfService = const PdfReportService(),
@@ -44,6 +48,7 @@ class ResultScreen extends StatelessWidget {
   final Entitlement entitlement;
   final PdfReportService pdfService;
   final ReportSharing sharing;
+  final CalculationStore store;
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +88,7 @@ class ResultScreen extends StatelessWidget {
                   calculator: calculator,
                   pdfService: pdfService,
                   sharing: sharing,
+                  store: store,
                 ),
               ],
             ],
@@ -140,6 +146,7 @@ class _CarteResultat extends StatelessWidget {
     required this.calculator,
     required this.pdfService,
     required this.sharing,
+    required this.store,
   });
 
   final ComparisonResult resultat;
@@ -151,6 +158,7 @@ class _CarteResultat extends StatelessWidget {
   final FeeCalculator calculator;
   final PdfReportService pdfService;
   final ReportSharing sharing;
+  final CalculationStore store;
 
   @override
   Widget build(BuildContext context) {
@@ -202,6 +210,14 @@ class _CarteResultat extends StatelessWidget {
             calculator: calculator,
             pdfService: pdfService,
             sharing: sharing,
+          ),
+          const SizedBox(height: 10),
+          _BoutonSauvegarde(
+            volumeMensuel: volumeMensuel,
+            panierMoyen: panierMoyen,
+            providerActuel: providerActuel,
+            entitlement: entitlement,
+            store: store,
           ),
           const SizedBox(height: 8),
           Center(
@@ -337,6 +353,107 @@ class _BoutonPdfState extends State<_BoutonPdf> {
                       const Text('Recevoir le détail en PDF'),
                     ],
                   ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Sauvegarde du calcul (§4 : fonctionnalité débloquée par l'achat).
+///
+/// Bouton secondaire : l'export PDF reste l'action principale de l'écran.
+class _BoutonSauvegarde extends StatefulWidget {
+  const _BoutonSauvegarde({
+    required this.volumeMensuel,
+    required this.panierMoyen,
+    required this.providerActuel,
+    required this.entitlement,
+    required this.store,
+  });
+
+  final double volumeMensuel;
+  final double? panierMoyen;
+  final TpeProvider providerActuel;
+  final Entitlement entitlement;
+  final CalculationStore store;
+
+  @override
+  State<_BoutonSauvegarde> createState() => _BoutonSauvegardeState();
+}
+
+class _BoutonSauvegardeState extends State<_BoutonSauvegarde> {
+  Future<void> _appuyer() async {
+    if (!widget.entitlement.estDebloque) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PaywallScreen(entitlement: widget.entitlement),
+        ),
+      );
+      if (!mounted || !widget.entitlement.estDebloque) return;
+    }
+
+    final libelle = await demanderLibelleCalcul(
+      context,
+      libelleParDefaut: libelleParDefautPour(
+        nomPrestataire: widget.providerActuel.nomComplet,
+        volumeMensuel: widget.volumeMensuel,
+      ),
+    );
+    if (libelle == null || !mounted) return;
+
+    await widget.store.enregistrer(
+      SavedCalculation(
+        // L'horodatage sert d'identifiant : deux sauvegardes successives
+        // du même calcul créent deux entrées, ce qui correspond à ce que
+        // l'utilisateur voit.
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        libelle: libelle,
+        volumeMensuel: widget.volumeMensuel,
+        panierMoyen: widget.panierMoyen,
+        providerActuelId: widget.providerActuel.id,
+        creeLe: DateTime.now(),
+      ),
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Calcul enregistré.')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return ValueListenableBuilder<bool>(
+      valueListenable: widget.entitlement,
+      builder: (context, deverrouille, _) {
+        return SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _appuyer,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: colors.textPrimary,
+              side: BorderSide(color: colors.divider),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  deverrouille ? Icons.bookmark_outline : Icons.lock_outline,
+                  size: 16,
+                  color: colors.textSecondary,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Enregistrer ce calcul',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
           ),
         );
       },

@@ -58,3 +58,6 @@ ui-debug.log
 .env
 .env.*
 *.env
+
+# Harnais de prévisualisation local (screenshots de mise au point UI)
+lib/_preview.dart

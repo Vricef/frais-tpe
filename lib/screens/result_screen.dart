@@ -8,7 +8,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/comparison_gauge.dart';
 import '../widgets/ticket_card.dart';
-import 'provider_detail_screen.dart';
+import 'comparison_table_screen.dart';
 
 /// Écran 3 du parcours (§8) : le résultat de la comparaison.
 ///
@@ -67,6 +67,8 @@ class ResultScreen extends StatelessWidget {
                   resultat: resultat,
                   volumeMensuel: volumeMensuel,
                   panierMoyen: panierMoyen,
+                  providers: providers,
+                  providerActuel: providerActuel,
                 ),
               ],
             ],
@@ -118,11 +120,15 @@ class _CarteResultat extends StatelessWidget {
     required this.resultat,
     required this.volumeMensuel,
     required this.panierMoyen,
+    required this.providers,
+    required this.providerActuel,
   });
 
   final ComparisonResult resultat;
   final double volumeMensuel;
   final double? panierMoyen;
+  final List<TpeProvider> providers;
+  final TpeProvider providerActuel;
 
   @override
   Widget build(BuildContext context) {
@@ -182,16 +188,19 @@ class _CarteResultat extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => ProviderDetailScreen(
-                      provider: resultat.optimise.provider,
+                    builder: (_) => ComparisonTableScreen(
                       volumeMensuel: volumeMensuel,
+                      providers: providers,
+                      providerActuel: providerActuel,
                       panierMoyen: panierMoyen,
                     ),
                   ),
                 );
               },
               child: Text(
-                'Voir la fiche de ${resultat.optimise.provider.nom}',
+                providers.length > 1
+                    ? 'Voir les ${providers.length} offres comparées'
+                    : 'Voir le détail des offres',
                 style: TextStyle(color: colors.textSecondary, fontSize: 13.5),
               ),
             ),

@@ -77,6 +77,37 @@ class FeeCalculator {
     return (min + max) / 2;
   }
 
+  /// Classe tous les prestataires du moins cher au plus cher pour le
+  /// volume donné — le tableau comparatif de l'écran 3.
+  ///
+  /// Contrairement à [comparer], le prestataire actuel reste dans la
+  /// liste : l'utilisateur doit pouvoir se situer parmi les offres.
+  List<FeeBreakdown> classer({
+    required List<TpeProvider> providers,
+    required double volumeMensuel,
+    double? panierMoyen,
+  }) {
+    final breakdowns = providers
+        .map(
+          (p) => calculer(
+            provider: p,
+            volumeMensuel: volumeMensuel,
+            panierMoyen: panierMoyen,
+          ),
+        )
+        .toList();
+
+    breakdowns.sort((a, b) {
+      final parCout = a.totalMensuel.compareTo(b.totalMensuel);
+      // À coût égal, on départage par nom pour que l'ordre soit stable
+      // d'un affichage à l'autre.
+      return parCout != 0
+          ? parCout
+          : a.provider.nom.toLowerCase().compareTo(b.provider.nom.toLowerCase());
+    });
+    return breakdowns;
+  }
+
   /// Compare la situation actuelle à la meilleure offre parmi [candidats].
   ///
   /// Renvoie `null` si aucun candidat n'est exploitable.

@@ -105,6 +105,57 @@ void main() {
     });
   });
 
+  group('classer', () {
+    test('trie du moins cher au plus cher', () {
+      final classement = calculator.classer(
+        providers: [
+          _fintech(id: 'cher', commission: 2.0),
+          _fintech(id: 'pas_cher', commission: 1.0),
+          _fintech(id: 'moyen', commission: 1.5),
+        ],
+        volumeMensuel: 1000,
+      );
+
+      expect(
+        classement.map((b) => b.provider.id),
+        ['pas_cher', 'moyen', 'cher'],
+      );
+    });
+
+    test('conserve le prestataire actuel dans le classement', () {
+      final actuel = _fintech(id: 'actuel', commission: 2.0);
+      final classement = calculator.classer(
+        providers: [actuel, _fintech(id: 'autre', commission: 1.0)],
+        volumeMensuel: 1000,
+      );
+
+      expect(classement.length, 2);
+      expect(
+        classement.map((b) => b.provider.id),
+        containsAll(['actuel', 'autre']),
+      );
+    });
+
+    test('départage les coûts égaux par nom, pour un ordre stable', () {
+      final classement = calculator.classer(
+        providers: [
+          _fintech(id: 'zeta', commission: 1.5),
+          _fintech(id: 'alpha', commission: 1.5),
+        ],
+        volumeMensuel: 1000,
+      );
+
+      expect(classement.map((b) => b.provider.id), ['alpha', 'zeta']);
+    });
+
+    test('une liste vide donne un classement vide', () {
+      expect(
+        calculator.classer(providers: const [], volumeMensuel: 1000),
+        isEmpty,
+      );
+    });
+  });
+
   group('comparer', () {
     test('retient le prestataire le moins cher', () {
       final result = calculator.comparer(

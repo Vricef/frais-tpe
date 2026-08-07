@@ -34,6 +34,27 @@ l'app :
    `lib/firebase_options.dart` et les fichiers de config natifs
    (`google-services.json`, `GoogleService-Info.plist`), volontairement
    exclus du dépôt (`.gitignore`) car spécifiques à chaque environnement.
+
+   Vérifier ensuite que le plugin Google Services a bien été ajouté à
+   `android/app/build.gradle.kts` :
+
+   ```kotlin
+   plugins {
+       id("com.android.application")
+       id("com.google.gms.google-services")   // ← ajouté par flutterfire
+       id("dev.flutter.flutter-gradle-plugin")
+   }
+   ```
+
+   et déclaré dans `android/settings.gradle.kts` :
+
+   ```kotlin
+   id("com.google.gms.google-services") version "4.4.2" apply false
+   ```
+
+   Sans lui, `google-services.json` n'est pas lu : Firebase ne s'initialise
+   pas sur Android. L'app démarre quand même — elle affiche un écran
+   d'explication — mais aucune grille tarifaire ne se charge.
 3. Importer les grilles tarifaires dans la collection `providers` (voir
    ci-dessous).
 

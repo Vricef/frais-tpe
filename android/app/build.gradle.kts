@@ -1,5 +1,8 @@
 plugins {
     id("com.android.application")
+    // Lit android/app/google-services.json et en génère les ressources que
+    // firebase_core attend au démarrage.
+    id("com.google.gms.google-services")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }

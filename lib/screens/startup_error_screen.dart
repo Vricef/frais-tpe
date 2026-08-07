@@ -14,9 +14,14 @@ class StartupErrorScreen extends StatelessWidget {
     super.key,
     required this.erreur,
     this.afficherDetail = false,
+    this.onReessayer,
   });
 
   final Object erreur;
+
+  /// Permet de relancer l'initialisation sans quitter l'app : une panne
+  /// réseau passagère ne doit pas obliger à redémarrer.
+  final VoidCallback? onReessayer;
 
   /// Affiche le message technique. Réservé au mode debug : il n'aiderait
   /// pas un commerçant, et l'inquiéterait plutôt.
@@ -109,6 +114,16 @@ class StartupErrorScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onReessayer != null) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onReessayer,
+                    child: const Text('Réessayer'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
             ],
           ),
         ),

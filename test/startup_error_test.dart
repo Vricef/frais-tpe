@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frais_tpe/main.dart';
@@ -16,13 +18,29 @@ void main() {
 
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('sans erreur de démarrage, l\'app ouvre l\'accueil', (
+  testWidgets('une initialisation réussie ouvre l\'accueil', (tester) async {
+    await tester.pumpWidget(FraisTpeApp(initialisation: () async {}));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Comparer mes frais'), findsOneWidget);
+    expect(find.byType(StartupErrorScreen), findsNothing);
+  });
+
+  testWidgets('quelque chose est affiché pendant l\'initialisation', (
     tester,
   ) async {
-    await tester.pumpWidget(FraisTpeApp());
+    // Le point de tout ce mécanisme : l'app ne doit jamais rester sur un
+    // écran vide, même le temps du démarrage.
+    final bloque = Completer<void>();
+    await tester.pumpWidget(FraisTpeApp(initialisation: () => bloque.future));
+    await tester.pump();
 
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.text('Frais TPE'), findsOneWidget);
-    expect(find.byType(StartupErrorScreen), findsNothing);
+
+    bloque.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('Comparer mes frais'), findsOneWidget);
   });
 
   testWidgets(
@@ -33,9 +51,11 @@ void main() {
         FraisTpeApp(
           entitlement: Entitlement(),
           store: PrefsCalculationStore(),
-          erreurDemarrage: Exception('no Firebase App has been created'),
+          initialisation: () async =>
+              throw Exception('no Firebase App has been created'),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(find.byType(StartupErrorScreen), findsOneWidget);
       expect(find.textContaining("n'a pas pu"), findsOneWidget);
@@ -43,6 +63,26 @@ void main() {
       expect(find.text('Frais TPE'), findsOneWidget);
     },
   );
+
+  testWidgets('« Réessayer » relance l\'initialisation', (tester) async {
+    var tentatives = 0;
+    await tester.pumpWidget(
+      FraisTpeApp(
+        initialisation: () async {
+          tentatives++;
+          if (tentatives == 1) throw Exception('échec passager');
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(StartupErrorScreen), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Réessayer'));
+    await tester.pumpAndSettle();
+
+    expect(tentatives, 2);
+    expect(find.text('Comparer mes frais'), findsOneWidget);
+  });
 
   testWidgets('le détail technique reste masqué hors mode debug', (
     tester,

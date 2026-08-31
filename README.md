@@ -71,9 +71,9 @@ firestore/seed_providers.js     Import / mise à jour vers Firestore
 
 ```bash
 cd firestore
-npm install firebase-admin
-node seed_providers.js --dry-run     # vérifier sans écrire
-GOOGLE_APPLICATION_CREDENTIALS=./cle-service.json node seed_providers.js
+npm install
+npm run seed:dry                     # vérifier sans écrire
+npm run seed                         # écrire dans Firestore
 ```
 
 L'écriture est idempotente (`merge`) : le script sert aussi bien à
@@ -81,10 +81,33 @@ initialiser la base qu'à mettre à jour un tarif qui a changé. Modifier le
 JSON puis relancer suffit — inutile de publier une nouvelle version de
 l'app.
 
-La clé de service se télécharge depuis la console Firebase (Paramètres du
-projet → Comptes de service). Ne la committez pas : `.gitignore` exclut
-déjà les fichiers `.json` de credentials courants, mais vérifiez avant de
-pousser.
+### Clé de service
+
+Elle se télécharge depuis la console Firebase (Paramètres du projet →
+Comptes de service → Générer une nouvelle clé privée). Le script la
+cherche dans cet ordre :
+
+1. l'option `--key=CHEMIN` ;
+2. la variable `GOOGLE_APPLICATION_CREDENTIALS` ;
+3. `firestore/cle-service.json`, puis `cle-service.json` à la racine.
+
+Poser le fichier à l'emplacement 3 évite d'avoir à le redire : une
+variable d'environnement ne survit pas à la fermeture du terminal, ce qui
+faisait échouer le script à chaque nouvelle session sur
+« Unable to detect a Project Id ». Ces deux chemins sont exclus par
+`.gitignore`.
+
+Cette clé donne un **accès administrateur complet** au projet et
+**contourne les règles de sécurité déployées** : elle reste hors du dépôt
+et ne se partage pas. Une clé qui se retrouve dans l'historique Git doit
+être considérée comme compromise et régénérée, même retirée depuis.
+
+Contre l'émulateur local, aucune clé n'est nécessaire :
+
+```bash
+firebase emulators:start --only firestore   # dans un autre terminal
+npm run seed:emulateur
+```
 
 ## Développement
 

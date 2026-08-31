@@ -88,8 +88,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.text('À SAVOIR'), findsOneWidget);
       expect(find.text(_qonto.condition!), findsOneWidget);
-      expect(find.textContaining("Non compté dans l'estimation"), findsOneWidget);
     });
 
     testWidgets('le tableau l\'affiche même sur une ligne verrouillée', (
@@ -128,7 +128,7 @@ void main() {
     });
 
     test('chaque document se relit comme un TpeProvider exploitable', () {
-      expect(seed, hasLength(7));
+      expect(seed, hasLength(17));
       for (final entree in seed.entries) {
         final p = TpeProvider.fromMap(
           entree.key,
@@ -152,6 +152,7 @@ void main() {
       expect(qonto.fraisTransactionCb, 0.7);
       expect(qonto.fraisMensuels, 0);
       expect(qonto.condition, contains('9 € HT/mois'));
+      expect(qonto.source, 'vérifiée');
       // Le taux cartes pro / hors UE est affiché sur la fiche, pas
       // fondu dans le calcul du cas courant.
       expect(qonto.tarifsAdditionnels.single.taux, 2.6);

@@ -2,10 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Catégorie d'un prestataire (cahier des charges §5, champ Firestore `type`).
 ///
-/// Sert aussi de discriminant : les [processeurPaiement] ont une grille
-/// tarifaire publique et fixe (champs `frais_*`), les [banquePro] ont des
-/// tarifs négociés au cas par cas, affichés en fourchette (champs
-/// `fourchette_*`) — voir §3.2.
+/// Purement descriptif : sert au libellé affiché sur la fiche. La forme
+/// des tarifs — grille fixe ou fourchette — se lit dans les champs eux
+/// mêmes, via [TpeProvider.aTarifsFixes], et non ici.
 enum ProviderType {
   processeurPaiement,
   banquePro;
@@ -110,6 +109,12 @@ class TpeProvider {
 
   final DateTime? derniereMaj;
 
+  /// Provenance de la grille : `vérifiée` quand les montants viennent du
+  /// tarif publié par le prestataire, `estimation` pour une fourchette
+  /// indicative. Métadonnée de maintenance — c'est [aTarifsFixes] qui
+  /// décide de ce que l'utilisateur voit.
+  final String? source;
+
   /// Saisi par l'utilisateur plutôt que chargé depuis Firestore, pour un
   /// prestataire absent de la base ou un tarif négocié individuellement.
   final bool estPersonnalise;
@@ -130,10 +135,18 @@ class TpeProvider {
     this.mentionNegociation,
     this.condition,
     this.derniereMaj,
+    this.source,
     this.estPersonnalise = false,
   });
 
-  bool get aTarifsFixes => type == ProviderType.processeurPaiement;
+  /// Le tarif est-il connu exactement, ou seulement estimé ?
+  ///
+  /// Déduit de la donnée et non du [type] : une banque peut très bien
+  /// publier une grille fixe (Crédit Agricole, Caisse d'Épargne, Crédit
+  /// Mutuel), et l'inverse reste possible. Les confondre afficherait un
+  /// « ≈ » sur un tarif pourtant certain — ou, plus grave, un chiffre net
+  /// là où il n'y a qu'une estimation au milieu d'une fourchette.
+  bool get aTarifsFixes => fraisTransactionCb != null;
 
   /// Nom affiché : « SumUp — Paiements Plus » quand l'offre est précisée.
   String get nomComplet => offre == null ? nom : '$nom — $offre';
@@ -166,6 +179,7 @@ class TpeProvider {
       mentionNegociation: data['mention_negociation'] as String?,
       condition: data['condition'] as String?,
       derniereMaj: rawMaj is Timestamp ? rawMaj.toDate() : null,
+      source: data['source'] as String?,
     );
   }
 
@@ -192,6 +206,7 @@ class TpeProvider {
       if (mentionNegociation != null) 'mention_negociation': mentionNegociation,
       if (condition != null) 'condition': condition,
       if (derniereMaj != null) 'derniere_maj': Timestamp.fromDate(derniereMaj!),
+      if (source != null) 'source': source,
     };
   }
 }

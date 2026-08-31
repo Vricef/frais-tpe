@@ -190,10 +190,13 @@ class _CarteCout extends StatelessWidget {
   }
 }
 
-/// La grille tarifaire brute, telle qu'annoncée par le prestataire.
-/// Ce qu'il faut réunir pour obtenir l'offre, en plus d'en payer les
-/// frais. Volontairement hors du calcul : ce n'est pas un frais de
-/// carte, et l'inclure fausserait la comparaison dans l'autre sens.
+/// Ce que la grille tarifaire seule ne dit pas : compte obligatoire,
+/// frais de mise en service, facturation conditionnelle.
+///
+/// Le texte est repris tel quel de la base plutôt qu'assorti d'une
+/// mention figée : certaines de ces précisions sont des surcoûts à
+/// prévoir, d'autres jouent en faveur du prestataire, et une seule
+/// formule ne peut pas être juste pour les deux.
 class _Condition extends StatelessWidget {
   const _Condition({required this.texte});
 
@@ -213,7 +216,7 @@ class _Condition extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'À PRÉVOIR EN PLUS',
+                  'À SAVOIR',
                   style: TextStyle(
                     color: colors.textSecondary,
                     fontSize: 11,
@@ -229,16 +232,6 @@ class _Condition extends StatelessWidget {
                     height: 1.45,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  "Non compté dans l'estimation ci-dessus : ce n'est pas un "
-                  'frais de carte.',
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    fontSize: 12.5,
-                    height: 1.4,
-                  ),
-                ),
               ],
             ),
           ),
@@ -248,6 +241,7 @@ class _Condition extends StatelessWidget {
   }
 }
 
+/// La grille tarifaire brute, telle qu'annoncée par le prestataire.
 class _GrilleTarifaire extends StatelessWidget {
   const _GrilleTarifaire({required this.provider});
 

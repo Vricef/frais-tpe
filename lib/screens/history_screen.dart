@@ -63,9 +63,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _ouvrir(SavedCalculation calcul) async {
-    final actuel = _providers
-        .where((p) => p.id == calcul.providerActuelId)
-        .firstOrNull;
+    // Le prestataire saisi par l'utilisateur prime : il n'est pas en base,
+    // ses tarifs ont voyagé avec le calcul.
+    final actuel = calcul.providerPerso ??
+        _providers.where((p) => p.id == calcul.providerActuelId).firstOrNull;
 
     if (actuel == null) {
       // Le prestataire a disparu de la base : rejouer le calcul
@@ -87,7 +88,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
           volumeMensuel: calcul.volumeMensuel,
           panierMoyen: calcul.panierMoyen,
           providerActuel: actuel,
-          providers: _providers,
+          providers: [
+            ..._providers,
+            if (calcul.providerPerso != null) calcul.providerPerso!,
+          ],
           entitlement: widget.entitlement,
           store: widget.store,
         ),

@@ -7,7 +7,6 @@ import '../services/entitlement.dart';
 import '../services/fee_calculator.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
-import '../widgets/custom_provider_sheet.dart';
 import '../widgets/masked_amount.dart';
 import '../widgets/ticket_card.dart';
 import 'paywall_screen.dart';
@@ -20,9 +19,9 @@ import 'provider_detail_screen.dart';
 /// alignés en colonne. Le prestataire de l'utilisateur y figure aussi —
 /// se situer dans le classement fait partie de l'information.
 ///
-/// L'utilisateur peut y ajouter un prestataire absent de la base, qui
-/// rejoint la comparaison au même titre que les autres.
-class ComparisonTableScreen extends StatefulWidget {
+/// Un prestataire absent de la base se saisit à l'écran précédent, avec
+/// le reste du calcul : il arrive ici déjà classé, comme les autres.
+class ComparisonTableScreen extends StatelessWidget {
   const ComparisonTableScreen({
     super.key,
     required this.volumeMensuel,
@@ -45,37 +44,18 @@ class ComparisonTableScreen extends StatefulWidget {
   final Entitlement entitlement;
 
   @override
-  State<ComparisonTableScreen> createState() => _ComparisonTableScreenState();
-}
-
-class _ComparisonTableScreenState extends State<ComparisonTableScreen> {
-  /// Prestataires saisis à la main pendant la session. Leur sauvegarde
-  /// durable est une fonctionnalité payante (§4), pas encore implémentée.
-  final List<TpeProvider> _persos = [];
-
-  Future<void> _ajouterPrestataire() async {
-    final saisi = await afficherFormulairePrestataire(
-      context,
-      id: 'perso_${_persos.length + 1}',
-    );
-    if (saisi == null) return;
-    setState(() => _persos.add(saisi));
-  }
-
-  @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
-      valueListenable: widget.entitlement,
+      valueListenable: entitlement,
       builder: (context, deverrouille, _) {
-        final tous = [...widget.providers, ..._persos];
-        final classement = widget.calculator.classer(
-          providers: tous,
-          volumeMensuel: widget.volumeMensuel,
-          panierMoyen: widget.panierMoyen,
+        final classement = calculator.classer(
+          providers: providers,
+          volumeMensuel: volumeMensuel,
+          panierMoyen: panierMoyen,
         );
 
         final coutActuel = classement
-            .where((b) => b.provider.id == widget.providerActuel.id)
+            .where((b) => b.provider.id == providerActuel.id)
             .map((b) => b.totalMensuel)
             .firstOrNull;
 
@@ -83,11 +63,10 @@ class _ComparisonTableScreenState extends State<ComparisonTableScreen> {
           classement: classement,
           deverrouille: deverrouille,
           coutActuel: coutActuel,
-          volumeMensuel: widget.volumeMensuel,
-          panierMoyen: widget.panierMoyen,
-          providerActuel: widget.providerActuel,
-          entitlement: widget.entitlement,
-          onAjouter: _ajouterPrestataire,
+          volumeMensuel: volumeMensuel,
+          panierMoyen: panierMoyen,
+          providerActuel: providerActuel,
+          entitlement: entitlement,
         );
       },
     );
@@ -103,7 +82,6 @@ class _Vue extends StatelessWidget {
     required this.panierMoyen,
     required this.providerActuel,
     required this.entitlement,
-    required this.onAjouter,
   });
 
   final List<FeeBreakdown> classement;
@@ -113,7 +91,6 @@ class _Vue extends StatelessWidget {
   final double? panierMoyen;
   final TpeProvider providerActuel;
   final Entitlement entitlement;
-  final VoidCallback onAjouter;
 
   /// Les offres chiffrées en version gratuite : la moins chère de la base,
   /// celle de l'utilisateur, et celles qu'il a saisies lui-même (dont il
@@ -248,8 +225,6 @@ class _Vue extends StatelessWidget {
                   onTap: () => _ouvrirPaywall(context),
                 ),
               ],
-              const SizedBox(height: 16),
-              _AjoutPrestataire(onTap: onAjouter),
               if (classement.any((b) => !b.provider.aTarifsFixes)) ...[
                 const SizedBox(height: 14),
                 _LegendeEstimation(),
@@ -438,54 +413,6 @@ class _Etiquette extends StatelessWidget {
           color: couleur,
           fontSize: 11,
           fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _AjoutPrestataire extends StatelessWidget {
-  const _AjoutPrestataire({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: TicketCard(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(Icons.add_circle_outline, size: 20, color: colors.accent),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Votre prestataire n\'est pas listé ?',
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w600,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Saisissez ses tarifs pour l\'ajouter à la comparaison.',
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                      fontSize: 13,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );

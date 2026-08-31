@@ -5,29 +5,34 @@ import '../models/provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
-/// Formulaire de saisie d'un prestataire absent de la base.
+/// Formulaire de saisie du prestataire actuel quand il est absent de la
+/// base.
 ///
 /// Sert aux prestataires non couverts (Smile&Pay, Yavin, Stancer, Revolut
 /// Business…) et aux tarifs négociés individuellement, que personne ne
 /// peut connaître à la place du commerçant.
 ///
+/// [initial] pré-remplit les champs pour corriger une saisie précédente.
+///
 /// Renvoie le prestataire saisi, ou `null` si l'utilisateur abandonne.
 Future<TpeProvider?> afficherFormulairePrestataire(
   BuildContext context, {
   required String id,
+  TpeProvider? initial,
 }) {
   return showModalBottomSheet<TpeProvider>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => _FormulairePrestataire(id: id),
+    builder: (context) => _FormulairePrestataire(id: id, initial: initial),
   );
 }
 
 class _FormulairePrestataire extends StatefulWidget {
-  const _FormulairePrestataire({required this.id});
+  const _FormulairePrestataire({required this.id, this.initial});
 
   final String id;
+  final TpeProvider? initial;
 
   @override
   State<_FormulairePrestataire> createState() => _FormulairePrestataireState();
@@ -38,6 +43,26 @@ class _FormulairePrestataireState extends State<_FormulairePrestataire> {
   final _commission = TextEditingController();
   final _fraisFixe = TextEditingController();
   final _abonnement = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initial;
+    if (initial == null) return;
+    _nom.text = initial.nom;
+    _commission.text = _texte(initial.fraisTransactionCb);
+    _fraisFixe.text = _texte(initial.fraisFixeTransaction);
+    _abonnement.text = _texte(initial.fraisMensuels);
+  }
+
+  /// Virgule décimale : le champ est relu par l'utilisateur, pas par
+  /// une machine.
+  static String _texte(double? valeur) {
+    if (valeur == null) return '';
+    final brut = valeur.toStringAsFixed(2);
+    return brut.replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '')
+        .replaceAll('.', ',');
+  }
 
   @override
   void dispose() {
@@ -111,13 +136,16 @@ class _FormulairePrestataireState extends State<_FormulairePrestataire> {
               ),
               const SizedBox(height: 18),
               Text(
-                'Ajouter un prestataire',
+                widget.initial == null
+                    ? 'Votre prestataire'
+                    : 'Corriger vos tarifs',
                 style: textTheme.headlineMedium?.copyWith(fontSize: 21),
               ),
               const SizedBox(height: 8),
               Text(
-                "Pour un prestataire absent de la liste, ou un tarif que vous "
-                "avez négocié. Il rejoindra la comparaison comme les autres.",
+                "Pour un prestataire absent de la liste, ou un tarif que "
+                "vous avez négocié. Ces montants figurent sur votre relevé "
+                "mensuel ou votre contrat.",
                 style: TextStyle(
                   color: colors.textSecondary,
                   fontSize: 13.5,
@@ -126,7 +154,7 @@ class _FormulairePrestataireState extends State<_FormulairePrestataire> {
               ),
               const SizedBox(height: 20),
               _Champ(
-                libelle: 'NOM',
+                libelle: 'NOM (OPTIONNEL)',
                 controller: _nom,
                 indice: 'Mon prestataire',
                 numerique: false,
@@ -161,7 +189,7 @@ class _FormulairePrestataireState extends State<_FormulairePrestataire> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _valide ? _valider : null,
-                  child: const Text('Ajouter à la comparaison'),
+                  child: const Text('Utiliser ce prestataire'),
                 ),
               ),
               const SizedBox(height: 8),

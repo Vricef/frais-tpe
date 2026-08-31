@@ -412,6 +412,12 @@ class _BoutonSauvegardeState extends State<_BoutonSauvegarde> {
         volumeMensuel: widget.volumeMensuel,
         panierMoyen: widget.panierMoyen,
         providerActuelId: widget.providerActuel.id,
+        // Un prestataire saisi à la main n'existe pas en base : ses
+        // tarifs partent avec le calcul, sans quoi il serait impossible
+        // de le rouvrir.
+        providerPerso: widget.providerActuel.estPersonnalise
+            ? widget.providerActuel
+            : null,
         creeLe: DateTime.now(),
       ),
     );

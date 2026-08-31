@@ -9,8 +9,18 @@ import '../services/fee_calculator.dart';
 import '../services/firestore_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/custom_provider_sheet.dart';
 import '../widgets/ticket_card.dart';
 import 'result_screen.dart';
+
+/// Entrée repère du sélecteur : ne désigne aucun prestataire réel, elle
+/// ouvre le formulaire de saisie manuelle. Un objet dédié plutôt qu'un
+/// `null` : `null` est déjà l'état « rien de choisi » du DropdownButton.
+const _prestataireNonListe = TpeProvider(
+  id: '__non_liste__',
+  nom: 'Mon prestataire n\'est pas dans la liste',
+  type: ProviderType.processeurPaiement,
+);
 
 /// Écran 2 du parcours (§8) : saisie du volume/CA mensuel encaissé par
 /// carte, et du prestataire actuel.
@@ -42,6 +52,11 @@ class _VolumeInputScreenState extends State<VolumeInputScreen> {
 
   List<TpeProvider> _providers = const [];
   TpeProvider? _providerActuel;
+
+  /// Prestataire saisi à la main, quand celui de l'utilisateur n'est pas
+  /// dans la base : Smile&Pay, Yavin, Stancer, ou un tarif négocié que
+  /// personne ne peut connaître à sa place.
+  TpeProvider? _perso;
   bool _chargement = true;
   String? _erreur;
 
@@ -99,6 +114,34 @@ class _VolumeInputScreenState extends State<VolumeInputScreen> {
   bool get _peutComparer =>
       _volume != null && _providerActuel != null && !_chargement;
 
+  /// La base, plus le prestataire saisi s'il y en a un : il doit figurer
+  /// au classement comme les autres, sinon l'utilisateur ne peut pas s'y
+  /// situer.
+  List<TpeProvider> get _tousLesProviders => [..._providers, ?_perso];
+
+  Future<void> _choisirPrestataire(TpeProvider? choix) async {
+    if (choix == null) return;
+    if (!identical(choix, _prestataireNonListe)) {
+      setState(() => _providerActuel = choix);
+      return;
+    }
+
+    // Re-choisir l'entrée alors qu'un prestataire est déjà saisi rouvre
+    // le formulaire pré-rempli : c'est le seul moyen d'en corriger le taux.
+    final saisi = await afficherFormulairePrestataire(
+      context,
+      id: 'perso',
+      initial: _perso,
+    );
+    // Abandon : la sélection précédente est conservée telle quelle, la
+    // sentinelle n'ayant jamais été posée comme valeur.
+    if (saisi == null) return;
+    setState(() {
+      _perso = saisi;
+      _providerActuel = saisi;
+    });
+  }
+
   void _comparer() {
     final volume = _volume;
     final actuel = _providerActuel;
@@ -110,7 +153,7 @@ class _VolumeInputScreenState extends State<VolumeInputScreen> {
           volumeMensuel: volume,
           panierMoyen: _panierMoyen,
           providerActuel: actuel,
-          providers: _providers,
+          providers: _tousLesProviders,
           entitlement: widget.entitlement,
           store: widget.store,
         ),
@@ -214,9 +257,15 @@ class _VolumeInputScreenState extends State<VolumeInputScreen> {
                             const SizedBox(height: 12),
                             const TicketPerforation(),
                             const SizedBox(height: 12),
-                            Row(
+                            // `Wrap` et non `Row` : à 360 px de large — un
+                            // milieu de gamme courant — les trois puces
+                            // débordaient du ticket et se retrouvaient
+                            // rognées. Elles passent maintenant à la ligne.
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
                               children: [
-                                for (final montant in _montantsSuggeres) ...[
+                                for (final montant in _montantsSuggeres)
                                   _PuceMontant(
                                     montant: montant,
                                     selectionne: _volume == montant,
@@ -226,8 +275,6 @@ class _VolumeInputScreenState extends State<VolumeInputScreen> {
                                       setState(() {});
                                     },
                                   ),
-                                  const SizedBox(width: 8),
-                                ],
                               ],
                             ),
                           ],
@@ -255,9 +302,9 @@ class _VolumeInputScreenState extends State<VolumeInputScreen> {
                         })
                       else
                         _SelecteurPrestataire(
-                          providers: _providers,
+                          providers: _tousLesProviders,
                           selection: _providerActuel,
-                          onChanged: (p) => setState(() => _providerActuel = p),
+                          onChanged: _choisirPrestataire,
                         ),
                       const SizedBox(height: 20),
                       _OptionsAvancees(
@@ -509,7 +556,32 @@ class _SelecteurPrestataire extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 6),
           items: [
             for (final p in providers)
-              DropdownMenuItem(value: p, child: Text(p.nom)),
+              DropdownMenuItem(
+                value: p,
+                // `nomComplet` et non `nom` : deux offres du même
+                // prestataire (SumUp avec et sans abonnement) donneraient
+                // sinon deux lignes identiques, impossibles à départager.
+                child: Text(p.nomComplet, overflow: TextOverflow.ellipsis),
+              ),
+            DropdownMenuItem(
+              value: _prestataireNonListe,
+              child: Row(
+                children: [
+                  Icon(Icons.add_circle_outline, size: 18, color: colors.accent),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      _prestataireNonListe.nom,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.accent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
           onChanged: onChanged,
         ),
@@ -543,9 +615,14 @@ class _EtatChargement extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Text(
-            'Chargement des tarifs…',
-            style: TextStyle(color: colors.textSecondary),
+          // `Expanded` : sans lui, le libellé déborde du cadre sur les
+          // écrans étroits au lieu de s'y ajuster.
+          Expanded(
+            child: Text(
+              'Chargement des tarifs…',
+              style: TextStyle(color: colors.textSecondary),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),

@@ -71,10 +71,8 @@ class ProviderDetailScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 _CoutTerminal(provider: provider),
               ],
-              if (provider.derniereMaj != null) ...[
-                const SizedBox(height: 16),
-                _MentionMiseAJour(date: provider.derniereMaj!),
-              ],
+              const SizedBox(height: 16),
+              _MentionSource(provider: provider),
             ],
           ),
         ),
@@ -504,23 +502,62 @@ class _CoutTerminal extends StatelessWidget {
   }
 }
 
-class _MentionMiseAJour extends StatelessWidget {
-  const _MentionMiseAJour({required this.date});
+/// D'où viennent les chiffres affichés, et depuis quand.
+///
+/// La distinction n'est pas cosmétique : une grille relevée sur le site
+/// du prestataire et une fourchette indicative n'engagent pas la même
+/// chose. Tant que cet écran annonçait « Tarifs vérifiés » pour tout le
+/// monde, une banque qui ne publie aucun tarif se présentait comme
+/// vérifiée.
+class _MentionSource extends StatelessWidget {
+  const _MentionSource({required this.provider});
 
-  final DateTime date;
+  final TpeProvider provider;
+
+  static const sourceVerifiee = 'vérifiée';
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final format = DateFormat('d MMMM yyyy', 'fr_FR');
+    final verifie = provider.source == sourceVerifiee;
+    // La date affichée est celle du relevé, pas celle du jour : dater la
+    // vérification d'aujourd'hui reviendrait à affirmer un contrôle qui
+    // n'a pas eu lieu.
+    final date = provider.derniereMaj;
+    final quand = date == null
+        ? null
+        : DateFormat('d MMMM yyyy', 'fr_FR').format(date);
+
+    final texte = verifie
+        ? [
+            'Vérifié sur le site officiel du prestataire',
+            if (quand != null) ', le $quand',
+            '.',
+          ].join()
+        : [
+            'Fourchette indicative : ce prestataire ne publie pas de grille '
+                'tarifaire',
+            if (quand != null) ' (relevé du $quand)',
+            '.',
+          ].join();
+
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.update, size: 15, color: colors.textSecondary),
+        Icon(
+          verifie ? Icons.verified_outlined : Icons.help_outline,
+          size: 15,
+          color: verifie ? colors.savings : colors.textSecondary,
+        ),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
-            'Tarifs vérifiés le ${format.format(date)}',
-            style: TextStyle(color: colors.textSecondary, fontSize: 12.5),
+            texte,
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 12.5,
+              height: 1.35,
+            ),
           ),
         ),
       ],

@@ -188,9 +188,16 @@ Frais TPE est un outil indépendant. Nous ne sommes affiliés à aucun prestatai
 - Les 2 premières captures décident du téléchargement : elles doivent se
   comprendre sans lire, vignette comprise.
 - Les montants affichés doivent être **cohérents d'une capture à
-  l'autre** (même scénario : 4 200 €/mois, 82,50 € → 56,38 €). Un
-  visiteur attentif remarque les incohérences, et c'est précisément le
-  public qu'on vise.
+  l'autre**. Un visiteur attentif remarque les incohérences, et c'est
+  précisément le public qu'on vise.
+
+**Scénario retenu** — 4 200 € encaissés par mois, panier moyen 35 € :
+Caisse d'Épargne — Tap to Pay (75,40 €/mois) contre Qonto — Tap to Pay
++ TPE (29,40 €/mois), soit **46,00 €/mois et 552,00 €/an** d'économie.
+Le prestataire actuel cumule commission, frais fixe et abonnement :
+c'est le seul cas où le détail de l'écart montre ses trois postes
+(23,10 + 18,00 + 4,90) et où l'on peut vérifier que leur somme tombe
+juste.
 
 ### Les 6 captures
 
@@ -238,6 +245,23 @@ Frais TPE est un outil indépendant. Nous ne sommes affiliés à aucun prestatai
 - Pourquoi : c'est le différenciateur le plus fort face aux comparateurs
   gratuits financés par l'affiliation.
 
+### Fabrication
+
+Les images sont produites depuis l'app elle-même, sur les tarifs
+réellement en base — pas redessinées :
+
+```bash
+python3 tool/generer_preview.py        # lib/_preview.dart depuis le seed
+flutter build web -t lib/_preview.dart --no-web-resources-cdn \
+    --pwa-strategy=none --release
+(cd build/web && python3 -m http.server 8000 &)
+python3 tool/capturer_ecrans.py brut/  # rendus 1290 x 2796
+python3 tool/composer_captures.py brut/
+```
+
+Résultat dans `store/captures/`. Relancer la chaîne après une mise à jour
+des tarifs suffit à remettre les captures d'aplomb.
+
 ### Bannière Google Play (1024 × 500)
 
 - Fond papier, logo terre cuite à gauche.
@@ -248,7 +272,19 @@ Frais TPE est un outil indépendant. Nous ne sommes affiliés à aucun prestatai
 
 ---
 
-## 4. Champs annexes
+## 4. Politique de confidentialité
+
+`store/politique-confidentialite.html`, à publier sur vricef.fr — Apple
+comme Google exigent une URL accessible, y compris quand aucune donnée
+n'est collectée. Quatre champs restent à remplir avant publication :
+raison sociale, statut, adresse et adresse de contact.
+
+Le formulaire de confidentialité des stores : aucune donnée collectée,
+mais la lecture des tarifs passe par Firestore, donc l'adresse IP est
+visible de l'infrastructure Google. La politique le dit explicitement
+plutôt que d'annoncer que rien ne quitte l'appareil.
+
+## 5. Champs annexes
 
 | Champ | Valeur |
 |---|---|

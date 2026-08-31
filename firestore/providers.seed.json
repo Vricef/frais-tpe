@@ -6,7 +6,8 @@
     "frais_transaction_cb": 1.75,
     "frais_mensuels": 0,
     "cout_terminal_min": 39,
-    "derniere_maj": "2026-08-06"
+    "derniere_maj": "2026-08-31",
+    "source": "vérifiée"
   },
   "sumup_paiements_plus": {
     "nom": "SumUp",
@@ -24,7 +25,8 @@
         "taux": 2.5
       }
     ],
-    "derniere_maj": "2026-08-06"
+    "derniere_maj": "2026-08-31",
+    "source": "vérifiée"
   },
   "zettle": {
     "nom": "Zettle",
@@ -40,7 +42,8 @@
     ],
     "cout_terminal_min": 29,
     "cout_terminal_max": 199,
-    "derniere_maj": "2026-08-06"
+    "derniere_maj": "2026-08-31",
+    "source": "vérifiée"
   },
   "stripe_terminal": {
     "nom": "Stripe",
@@ -58,7 +61,8 @@
     ],
     "cout_terminal_min": 59,
     "cout_terminal_max": 199,
-    "derniere_maj": "2026-08-06"
+    "derniere_maj": "2026-08-31",
+    "source": "vérifiée"
   },
   "mypos": {
     "nom": "myPOS",
@@ -80,7 +84,8 @@
     ],
     "cout_terminal_min": 29,
     "cout_terminal_max": 249,
-    "derniere_maj": "2026-08-06"
+    "derniere_maj": "2026-08-31",
+    "source": "vérifiée"
   },
   "square": {
     "nom": "Square",
@@ -89,7 +94,8 @@
     "frais_mensuels": 0,
     "cout_terminal_min": 165,
     "cout_terminal_max": 165,
-    "derniere_maj": "2026-08-06"
+    "derniere_maj": "2026-08-31",
+    "source": "vérifiée"
   },
   "qonto": {
     "nom": "Qonto",
@@ -114,7 +120,8 @@
     "frais_transaction_cb": 1.75,
     "frais_mensuels": 0,
     "source": "vérifiée",
-    "derniere_maj": "2026-08-31"
+    "derniere_maj": "2026-08-31",
+    "condition": "Un taux réduit existe avec l'abonnement à 15,50 € HT/mois : il n'est pas publié et se négocie avec votre conseiller (généralement inférieur à 1,75 %). L'estimation ci-dessus retient le tarif sans abonnement."
   },
   "caisse_epargne_tap_to_pay": {
     "nom": "Caisse d'Épargne",

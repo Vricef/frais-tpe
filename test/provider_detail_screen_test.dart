@@ -69,7 +69,7 @@ void main() {
     expect(find.text('GRILLE TARIFAIRE'), findsNothing);
   });
 
-  testWidgets('la date de mise à jour est affichée quand elle existe', (
+  testWidgets('la date du relevé est affichée quand la source est connue', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -80,6 +80,7 @@ void main() {
             nom: 'SumUp',
             type: ProviderType.processeurPaiement,
             fraisTransactionCb: 1.75,
+            source: 'vérifiée',
             derniereMaj: DateTime(2026, 7, 28),
           ),
           volumeMensuel: 1000,
@@ -87,10 +88,15 @@ void main() {
       ),
     );
 
-    expect(find.text('Tarifs vérifiés le 28 juillet 2026'), findsOneWidget);
+    expect(
+      find.text(
+        'Vérifié sur le site officiel du prestataire, le 28 juillet 2026.',
+      ),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('sans date de mise à jour, aucune mention trompeuse', (
+  testWidgets('sans source renseignée, aucune mention trompeuse', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -107,7 +113,7 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('Tarifs vérifiés'), findsNothing);
+    expect(find.textContaining('Vérifié sur le site officiel'), findsNothing);
   });
 
   testWidgets('le panier moyen saisi change le coût des frais fixes', (

@@ -59,6 +59,10 @@ class ProviderDetailScreen extends StatelessWidget {
                 _GrilleTarifaire(provider: provider)
               else
                 _FourchetteNegociation(provider: provider),
+              if (provider.condition != null) ...[
+                const SizedBox(height: 16),
+                _Condition(texte: provider.condition!),
+              ],
               if (provider.tarifsAdditionnels.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 _TarifsAdditionnels(tarifs: provider.tarifsAdditionnels),
@@ -187,6 +191,63 @@ class _CarteCout extends StatelessWidget {
 }
 
 /// La grille tarifaire brute, telle qu'annoncée par le prestataire.
+/// Ce qu'il faut réunir pour obtenir l'offre, en plus d'en payer les
+/// frais. Volontairement hors du calcul : ce n'est pas un frais de
+/// carte, et l'inclure fausserait la comparaison dans l'autre sens.
+class _Condition extends StatelessWidget {
+  const _Condition({required this.texte});
+
+  final String texte;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return TicketCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 18, color: colors.accent),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'À PRÉVOIR EN PLUS',
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: 11,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  texte,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 14,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "Non compté dans l'estimation ci-dessus : ce n'est pas un "
+                  'frais de carte.',
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _GrilleTarifaire extends StatelessWidget {
   const _GrilleTarifaire({required this.provider});
 

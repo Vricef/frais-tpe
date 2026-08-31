@@ -69,5 +69,17 @@
     "cout_terminal_min": 165,
     "cout_terminal_max": 165,
     "derniere_maj": "2026-08-06"
+  },
+  "qonto": {
+    "nom": "Qonto",
+    "offre": "Tap to Pay + TPE",
+    "type": "processeurPaiement",
+    "frais_transaction_cb": 0.7,
+    "frais_mensuels": 0,
+    "tarifs_additionnels": [
+      { "libelle": "Cartes pro ou hors UE", "taux": 2.6 }
+    ],
+    "condition": "Compte pro Qonto requis, à partir de 9 € HT/mois.",
+    "derniere_maj": "2026-08-31"
   }
 }

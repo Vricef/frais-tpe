@@ -99,6 +99,15 @@ class TpeProvider {
   /// négociation).
   final String? mentionNegociation;
 
+  /// Condition d'accès à l'offre, hors frais d'encaissement : compte
+  /// bancaire obligatoire, engagement, volume minimum.
+  ///
+  /// Elle n'entre pas dans le calcul — ce n'est pas un frais de carte —
+  /// mais elle est affichée partout où l'offre apparaît. Sans elle, une
+  /// offre peut prendre la première place sur un coût que l'utilisateur
+  /// ne pourra pas obtenir aux conditions affichées.
+  final String? condition;
+
   final DateTime? derniereMaj;
 
   /// Saisi par l'utilisateur plutôt que chargé depuis Firestore, pour un
@@ -119,6 +128,7 @@ class TpeProvider {
     this.fourchetteMin,
     this.fourchetteMax,
     this.mentionNegociation,
+    this.condition,
     this.derniereMaj,
     this.estPersonnalise = false,
   });
@@ -154,6 +164,7 @@ class TpeProvider {
       fourchetteMin: (data['fourchette_min'] as num?)?.toDouble(),
       fourchetteMax: (data['fourchette_max'] as num?)?.toDouble(),
       mentionNegociation: data['mention_negociation'] as String?,
+      condition: data['condition'] as String?,
       derniereMaj: rawMaj is Timestamp ? rawMaj.toDate() : null,
     );
   }
@@ -179,6 +190,7 @@ class TpeProvider {
       if (fourchetteMin != null) 'fourchette_min': fourchetteMin,
       if (fourchetteMax != null) 'fourchette_max': fourchetteMax,
       if (mentionNegociation != null) 'mention_negociation': mentionNegociation,
+      if (condition != null) 'condition': condition,
       if (derniereMaj != null) 'derniere_maj': Timestamp.fromDate(derniereMaj!),
     };
   }

@@ -335,6 +335,20 @@ class _LigneOffre extends StatelessWidget {
                       color: colors.textPrimary,
                     ),
                   ),
+                  // Affichée qu'elle soit verrouillée ou non : c'est une
+                  // propriété de l'offre, pas de son montant, et sans elle
+                  // une première place peut reposer sur un silence.
+                  if (provider.condition != null) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      provider.condition!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.35,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
                   if (estActuel || estMeilleure || provider.estPersonnalise) ...[
                     const SizedBox(height: 4),
                     _Etiquette(

@@ -70,3 +70,9 @@ firestore/node_modules/
 
 # Harnais de prévisualisation local (screenshots de mise au point UI)
 lib/_preview.dart
+
+# Signature Android : le magasin de clés et ses mots de passe restent
+# hors du dépôt. Les perdre interdit toute mise à jour de l app publiée.
+android/key.properties
+*.jks
+*.keystore

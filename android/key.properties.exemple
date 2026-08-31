@@ -1,0 +1,17 @@
+# Copiez ce fichier en android/key.properties et renseignez-le.
+#
+# key.properties et le fichier .jks sont exclus du dépôt : le magasin de
+# clés signe vos mises à jour, et Google refuse toute version signée par
+# une autre clé. Le perdre interdit définitivement de mettre l'app à jour
+# sous le même identifiant — gardez-en une copie hors de cette machine.
+#
+# Création du magasin (une seule fois, à conserver) :
+#   keytool -genkey -v -keystore C:\chemin\vers\frais-tpe.jks \
+#       -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 \
+#       -alias frais-tpe
+
+storePassword=VOTRE_MOT_DE_PASSE_DU_MAGASIN
+keyPassword=VOTRE_MOT_DE_PASSE_DE_LA_CLE
+keyAlias=frais-tpe
+# Chemin absolu, ou relatif au dossier android/
+storeFile=C:\\chemin\\vers\\frais-tpe.jks

@@ -109,6 +109,64 @@ firebase emulators:start --only firestore   # dans un autre terminal
 npm run seed:emulateur
 ```
 
+## Achat intégré
+
+Déblocage unique à 3,99 € via `in_app_purchase` (paquet officiel Flutter).
+
+| Plateforme | Identifiant du produit | Type |
+|---|---|---|
+| iOS | `com.fraistpe.app.unlock_full` | non consommable |
+| Android | `unlock_full` | produit ponctuel |
+
+`PurchaseService` traduit ce que dit la boutique ; le seul effet durable —
+le déblocage — passe par `Entitlement`, qui le conserve sur l'appareil.
+La boutique reste la source de vérité : c'est elle qu'interroge
+« Restaurer mes achats », obligatoire sur iOS et accessible depuis l'écran
+de paiement.
+
+Les chemins d'achat s'éprouvent sans les stores grâce à `Boutique`, dont
+`test/support/boutique_factice.dart` fournit une implémentation
+pilotable : succès, annulation, panne réseau, produit non publié.
+
+### Construire l'AAB signé
+
+Nécessite le SDK Android (Android Studio, ou les *command-line tools*).
+
+**1. Créer le magasin de clés — une seule fois, à conserver.**
+
+```bash
+keytool -genkey -v -keystore ~/frais-tpe.jks -storetype JKS \
+    -keyalg RSA -keysize 2048 -validity 10000 -alias frais-tpe
+```
+
+Ce fichier signe toutes les mises à jour. Google refuse une version
+signée par une autre clé : **le perdre interdit définitivement de mettre
+l'app à jour** sous le même identifiant. Gardez-en une copie hors de la
+machine de développement. Ni lui ni ses mots de passe ne vont dans le
+dépôt — `.gitignore` les exclut.
+
+**2. Renseigner les secrets.**
+
+```bash
+cp android/key.properties.exemple android/key.properties
+# puis compléter les quatre valeurs
+```
+
+**3. Construire.**
+
+```bash
+flutter build appbundle --release
+```
+
+Résultat : `build/app/outputs/bundle/release/app-release.aab`, à importer
+en test interne sur la Play Console. Sans `android/key.properties`, le
+build retombe sur la clé de debug en l'annonçant : l'artefact passe, mais
+la Play Console le refuse.
+
+L'autorisation `com.android.vending.BILLING` est déclarée explicitement
+dans le manifeste : la Play Console n'ouvre la création d'un produit
+ponctuel qu'après avoir vu cette autorisation dans un artefact importé.
+
 ## Développement
 
 ```

@@ -1,6 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Facturation Play. La bibliothèque de `in_app_purchase` la déclare
+         déjà, mais la Play Console n'ouvre la création d'un produit
+         ponctuel qu'après avoir vu cette autorisation dans un artefact
+         importé : l'écrire ici garantit qu'elle y figure. -->
+    <uses-permission android:name="com.android.vending.BILLING" />
+
     <application
-        android:label="frais_tpe"
+        android:label="Frais TPE"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

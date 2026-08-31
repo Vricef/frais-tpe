@@ -6,6 +6,11 @@ import 'package:frais_tpe/models/provider.dart';
 import 'package:frais_tpe/screens/result_screen.dart';
 import 'package:frais_tpe/services/calculation_store.dart';
 import 'package:frais_tpe/services/entitlement.dart';
+import 'package:frais_tpe/services/purchase_service.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/boutique_factice.dart';
 import 'package:frais_tpe/services/report_sharing.dart';
 import 'package:frais_tpe/theme/app_theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -62,6 +67,10 @@ Future<void> _appuyerSurExport(WidgetTester tester) async {
 }
 
 void main() {
+  // Le déblocage s'écrit sur l'appareil : sans stockage simulé, l'écriture
+  // ne rend jamais la main et l'écran reste sur son indicateur d'attente.
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     await initializeDateFormatting('fr_FR');
@@ -116,11 +125,28 @@ void main() {
     // avoir payé : c'est le geste qu'il venait de faire.
     final espion = _SharingEspion();
     final entitlement = Entitlement(debloque: false);
-    await tester.pumpWidget(_ecran(entitlement, espion));
+    final boutique = BoutiqueFactice();
+    final service = PurchaseService(
+      entitlement: entitlement,
+      boutique: boutique,
+      delaiRestauration: const Duration(milliseconds: 50),
+    );
+    addTearDown(() async {
+      service.dispose();
+      await boutique.fermer();
+    });
+    await service.demarrer();
+    await tester.pumpWidget(
+      FournisseurAchats(service: service, child: _ecran(entitlement, espion)),
+    );
 
     await _appuyerSurExport(tester);
 
+    // L'achat est joué par la boutique factice : appuyer sur le bouton
+    // ne débloque plus rien par lui-même depuis le branchement réel.
     await tester.tap(find.text('Débloquer pour 3,99 €'));
+    await tester.pump();
+    boutique.emettre([BoutiqueFactice.achat(PurchaseStatus.purchased)]);
     await tester.pumpAndSettle();
 
     expect(espion.documents, hasLength(1));

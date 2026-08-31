@@ -1,4 +1,4 @@
-package com.vricef.frais_tpe
+package com.fraistpe.app
 
 import io.flutter.embedding.android.FlutterActivity
 

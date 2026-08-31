@@ -9,6 +9,7 @@ import 'screens/home_screen.dart';
 import 'screens/startup_error_screen.dart';
 import 'services/calculation_store.dart';
 import 'services/entitlement.dart';
+import 'services/purchase_service.dart';
 import 'theme/app_theme.dart';
 import 'widgets/ticket_card.dart';
 
@@ -48,12 +49,13 @@ Future<void> initialiserApp() async {
   );
 }
 
-class FraisTpeApp extends StatelessWidget {
+class FraisTpeApp extends StatefulWidget {
   FraisTpeApp({
     super.key,
     Entitlement? entitlement,
     CalculationStore? store,
     Future<void> Function()? initialisation,
+    this.achats,
   })  : entitlement = entitlement ?? Entitlement(),
         store = store ?? PrefsCalculationStore(),
         initialisation = initialisation ?? initialiserApp;
@@ -66,19 +68,57 @@ class FraisTpeApp extends StatelessWidget {
 
   final Future<void> Function() initialisation;
 
+  /// Service d'achat. `null` en laisse la création au démarrage, et
+  /// seulement là où une boutique existe — les tests et l'aperçu web n'en
+  /// ont pas, et l'instancier y échouerait.
+  final PurchaseService? achats;
+
+  @override
+  State<FraisTpeApp> createState() => _FraisTpeAppState();
+}
+
+class _FraisTpeAppState extends State<FraisTpeApp> {
+  PurchaseService? _achats;
+  bool _achatsInternes = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _achats = widget.achats;
+    if (_achats == null && boutiqueSupportee) {
+      _achats = PurchaseService(entitlement: widget.entitlement);
+      _achatsInternes = true;
+      // Démarré ici, et non à l'ouverture de l'écran de paiement : un
+      // achat validé pendant que l'app était fermée est rejoué par la
+      // boutique dès qu'on écoute, et serait perdu sinon.
+      _achats!.demarrer();
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_achatsInternes) _achats!.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Frais TPE',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      // Suit le réglage clair/sombre du téléphone.
-      themeMode: ThemeMode.system,
-      home: _Demarrage(
-        initialisation: initialisation,
-        entitlement: entitlement,
-        store: store,
+    // Au-dessus de `MaterialApp` : l'écran de paiement est poussé par le
+    // Navigator, dont les routes se construisent sous ce niveau.
+    return FournisseurAchats(
+      service: _achats,
+      child: MaterialApp(
+        title: 'Frais TPE',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        // Suit le réglage clair/sombre du téléphone.
+        themeMode: ThemeMode.system,
+        home: _Demarrage(
+          initialisation: widget.initialisation,
+          entitlement: widget.entitlement,
+          store: widget.store,
+        ),
       ),
     );
   }
@@ -107,6 +147,9 @@ class _DemarrageState extends State<_Demarrage> {
   Future<void> _lancer() async {
     try {
       await widget.initialisation();
+      // Relu avant d'afficher quoi que ce soit : sans ça, l'app
+      // s'ouvrirait verrouillée l'instant d'un achat déjà payé.
+      await widget.entitlement.charger();
     } catch (e, pile) {
       debugPrint('Échec du démarrage : $e\n$pile');
       rethrow;

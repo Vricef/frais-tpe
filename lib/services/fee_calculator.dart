@@ -140,9 +140,21 @@ class FeeCalculator {
     breakdowns.sort((a, b) => a.totalMensuel.compareTo(b.totalMensuel));
     final meilleur = breakdowns.first;
 
+    // La meilleure offre qui ne demande pas d'ouvrir un compte, quand ce
+    // n'est pas déjà la gagnante. Elle n'est retenue que si elle bat la
+    // situation actuelle : proposer une alternative plus chère que ce
+    // que l'utilisateur paie déjà n'aiderait personne.
+    final sansCompte = meilleur.provider.compteRequis
+        ? breakdowns
+            .where((b) => !b.provider.compteRequis)
+            .where((b) => b.totalMensuel < breakdownActuel.totalMensuel)
+            .firstOrNull
+        : null;
+
     return ComparisonResult(
       actuel: breakdownActuel,
       optimise: meilleur,
+      optimiseSansCompte: sansCompte,
       ecartParPoste: _ecartParPoste(breakdownActuel, meilleur),
     );
   }

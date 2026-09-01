@@ -115,6 +115,15 @@ class TpeProvider {
   /// décide de ce que l'utilisateur voit.
   final String? source;
 
+  /// L'offre suppose-t-elle d'ouvrir un compte chez le prestataire ?
+  ///
+  /// Vrai pour les banques et les néobanques, faux pour les processeurs
+  /// de paiement, qui s'ajoutent à la banque existante. La distinction ne
+  /// change rien au calcul : elle sert à proposer, à côté de la moins
+  /// chère dans l'absolu, la moins chère qui ne demande pas de changer de
+  /// banque — beaucoup de commerçants ne le feront pas.
+  final bool compteRequis;
+
   /// Saisi par l'utilisateur plutôt que chargé depuis Firestore, pour un
   /// prestataire absent de la base ou un tarif négocié individuellement.
   final bool estPersonnalise;
@@ -136,6 +145,7 @@ class TpeProvider {
     this.condition,
     this.derniereMaj,
     this.source,
+    this.compteRequis = false,
     this.estPersonnalise = false,
   });
 
@@ -180,6 +190,7 @@ class TpeProvider {
       condition: data['condition'] as String?,
       derniereMaj: rawMaj is Timestamp ? rawMaj.toDate() : null,
       source: data['source'] as String?,
+      compteRequis: data['compte_requis'] as bool? ?? false,
     );
   }
 
@@ -207,6 +218,7 @@ class TpeProvider {
       if (condition != null) 'condition': condition,
       if (derniereMaj != null) 'derniere_maj': Timestamp.fromDate(derniereMaj!),
       if (source != null) 'source': source,
+      if (compteRequis) 'compte_requis': true,
     };
   }
 }

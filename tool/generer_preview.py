@@ -28,6 +28,10 @@ CHAMPS_TEXTE = [
     ("mention_negociation", "mentionNegociation"),
     ("source", "source"),
 ]
+# Les drapeaux se transmettent à part : oubliés, l'aperçu rend un écran
+# qui n'existe pas — c'est ainsi que la carte « sans changer de banque »
+# avait disparu des captures.
+CHAMPS_BOOLEENS = [("compte_requis", "compteRequis")]
 
 
 def litteral(texte):
@@ -54,6 +58,9 @@ def provider_dart(pid, p):
     for cle, champ in CHAMPS_TEXTE:
         if p.get(cle):
             lignes.append(f"    {champ}: {litteral(p[cle])},")
+    for cle, champ in CHAMPS_BOOLEENS:
+        if p.get(cle):
+            lignes.append(f"    {champ}: true,")
     if p.get("derniere_maj"):
         a, m, j = (int(x) for x in p["derniere_maj"].split("-"))
         lignes.append(f"    derniereMaj: DateTime({a}, {m}, {j}),")

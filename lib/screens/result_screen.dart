@@ -165,7 +165,9 @@ class _CarteResultat extends StatelessWidget {
     final colors = context.colors;
     final format = _formatEuro;
 
-    return TicketCard(
+    return ValueListenableBuilder<bool>(
+      valueListenable: entitlement,
+      builder: (context, deverrouille, _) => TicketCard(
       padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,7 +175,12 @@ class _CarteResultat extends StatelessWidget {
           ComparisonGauge(
             currentLabel: "Aujourd'hui",
             currentAmount: resultat.actuel.totalMensuel,
-            optimizedLabel: 'Avec ${resultat.optimise.provider.nom}',
+            // Le montant de l'économie suffit à donner envie ; c'est le
+            // nom du gagnant qu'on vend. Il reste masqué tant que l'achat
+            // n'est pas fait.
+            optimizedLabel: deverrouille
+                ? 'Avec ${resultat.optimise.provider.nom}'
+                : 'La meilleure offre',
             optimizedAmount: resultat.optimise.totalMensuel,
           ),
           if (!resultat.dejaOptimal) ...[
@@ -182,6 +189,13 @@ class _CarteResultat extends StatelessWidget {
           ],
           const SizedBox(height: 16),
           _EncartEconomie(resultat: resultat),
+          if (resultat.optimiseSansCompte != null) ...[
+            const SizedBox(height: 12),
+            _SansChangerDeBanque(
+              resultat: resultat,
+              deverrouille: deverrouille,
+            ),
+          ],
           // Le détail explique une économie : hors de propos quand il n'y
           // en a pas, où il ne listerait que des écarts défavorables.
           if (!resultat.dejaOptimal && resultat.ecartParPoste.isNotEmpty) ...[
@@ -252,6 +266,93 @@ class _CarteResultat extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+      ),
+    );
+  }
+}
+
+/// La meilleure offre qui ne demande pas d'ouvrir un compte ailleurs.
+///
+/// Sans elle, le classement désigne le même gagnant à tout le monde, y
+/// compris à qui n'a aucune intention de changer de banque : une réponse
+/// exacte et inutilisable. Son nom reste masqué avant l'achat, comme
+/// celui de la meilleure offre.
+class _SansChangerDeBanque extends StatelessWidget {
+  const _SansChangerDeBanque({
+    required this.resultat,
+    required this.deverrouille,
+  });
+
+  final ComparisonResult resultat;
+  final bool deverrouille;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final offre = resultat.optimiseSansCompte!;
+    final economie = resultat.economieSansCompteMensuelle!;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: colors.surfaceAlt,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.account_balance_outlined, size: 18,
+              color: colors.textSecondary),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'SANS CHANGER DE BANQUE',
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: 10.5,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  deverrouille ? offre.provider.nomComplet : 'Une autre offre',
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                _formatEuro.format(offre.totalMensuel),
+                style: context.amountStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '- ${_formatEuro.format(economie)}',
+                style: context.amountStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: colors.savings,
+                ),
+              ),
+            ],
           ),
         ],
       ),

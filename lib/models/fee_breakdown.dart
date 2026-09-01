@@ -39,10 +39,24 @@ class ComparisonResult {
     required this.actuel,
     required this.optimise,
     required this.ecartParPoste,
+    this.optimiseSansCompte,
   });
 
   final FeeBreakdown actuel;
   final FeeBreakdown optimise;
+
+  /// La moins chère parmi les offres qui ne demandent pas d'ouvrir un
+  /// compte, quand elle diffère de [optimise].
+  ///
+  /// Sans elle, le classement désigne toujours le même gagnant à celui
+  /// qui n'a aucune intention de changer de banque : une réponse exacte
+  /// et inutilisable. `null` quand la meilleure offre est déjà de
+  /// celles-là — il n'y a alors qu'un gagnant à montrer.
+  final FeeBreakdown? optimiseSansCompte;
+
+  double? get economieSansCompteMensuelle => optimiseSansCompte == null
+      ? null
+      : actuel.totalMensuel - optimiseSansCompte!.totalMensuel;
 
   /// Détail de l'écart poste par poste, dans l'ordre d'affichage.
   final List<FeeLine> ecartParPoste;

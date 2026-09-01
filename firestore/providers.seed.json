@@ -111,7 +111,8 @@
     ],
     "condition": "Compte pro Qonto requis, à partir de 9 € HT/mois, non compté dans l'estimation ci-dessus.",
     "derniere_maj": "2026-08-31",
-    "source": "vérifiée"
+    "source": "vérifiée",
+    "compte_requis": true
   },
   "credit_agricole_up2pay_mobile": {
     "nom": "Crédit Agricole",
@@ -121,7 +122,8 @@
     "frais_mensuels": 0,
     "source": "vérifiée",
     "derniere_maj": "2026-08-31",
-    "condition": "Un taux réduit existe avec l'abonnement à 15,50 € HT/mois : il n'est pas publié et se négocie avec votre conseiller (généralement inférieur à 1,75 %). L'estimation ci-dessus retient le tarif sans abonnement."
+    "condition": "Un taux réduit existe avec l'abonnement à 15,50 € HT/mois : il n'est pas publié et se négocie avec votre conseiller (généralement inférieur à 1,75 %). L'estimation ci-dessus retient le tarif sans abonnement.",
+    "compte_requis": true
   },
   "caisse_epargne_tap_to_pay": {
     "nom": "Caisse d'Épargne",
@@ -138,7 +140,8 @@
     ],
     "condition": "Abonnement facturé uniquement les mois où le service est utilisé : l'estimation ci-dessus le compte tous les mois.",
     "source": "vérifiée",
-    "derniere_maj": "2026-08-31"
+    "derniere_maj": "2026-08-31",
+    "compte_requis": true
   },
   "banque_populaire_tap_to_pay": {
     "nom": "Banque Populaire",
@@ -155,7 +158,8 @@
     ],
     "condition": "Abonnement facturé uniquement les mois où le service est utilisé : l'estimation ci-dessus le compte tous les mois.",
     "source": "vérifiée",
-    "derniere_maj": "2026-08-31"
+    "derniere_maj": "2026-08-31",
+    "compte_requis": true
   },
   "credit_mutuel_monetico_sans_abonnement": {
     "nom": "Crédit Mutuel / CIC",
@@ -172,7 +176,8 @@
     ],
     "condition": "10 € HT de frais de mise en service à l'ouverture, non comptés dans l'estimation ci-dessus.",
     "source": "vérifiée",
-    "derniere_maj": "2026-08-31"
+    "derniere_maj": "2026-08-31",
+    "compte_requis": true
   },
   "credit_mutuel_monetico_avec_abonnement": {
     "nom": "Crédit Mutuel / CIC",
@@ -188,7 +193,8 @@
       }
     ],
     "source": "vérifiée",
-    "derniere_maj": "2026-08-31"
+    "derniere_maj": "2026-08-31",
+    "compte_requis": true
   },
   "revolut_business": {
     "nom": "Revolut Business",
@@ -196,7 +202,8 @@
     "frais_transaction_cb": 1.7,
     "frais_mensuels": 0,
     "source": "vérifiée",
-    "derniere_maj": "2026-08-31"
+    "derniere_maj": "2026-08-31",
+    "compte_requis": true
   },
   "bnp_paribas": {
     "nom": "BNP Paribas",
@@ -205,7 +212,8 @@
     "fourchette_max": 2.5,
     "mention_negociation": "Cette banque ne publie pas de grille tarifaire : le tarif se négocie au cas par cas. La fourchette ci-dessus vous donne une base de discussion.",
     "source": "estimation",
-    "derniere_maj": "2026-08-31"
+    "derniere_maj": "2026-08-31",
+    "compte_requis": true
   },
   "lcl": {
     "nom": "LCL",
@@ -214,7 +222,8 @@
     "fourchette_max": 2.5,
     "mention_negociation": "Cette banque ne publie pas de grille tarifaire : le tarif se négocie au cas par cas. La fourchette ci-dessus vous donne une base de discussion.",
     "source": "estimation",
-    "derniere_maj": "2026-08-31"
+    "derniere_maj": "2026-08-31",
+    "compte_requis": true
   },
   "la_banque_postale": {
     "nom": "La Banque Postale",
@@ -223,7 +232,8 @@
     "fourchette_max": 2.5,
     "mention_negociation": "Cette banque ne publie pas de grille tarifaire : le tarif se négocie au cas par cas. La fourchette ci-dessus vous donne une base de discussion.",
     "source": "estimation",
-    "derniere_maj": "2026-08-31"
+    "derniere_maj": "2026-08-31",
+    "compte_requis": true
   },
   "societe_generale": {
     "nom": "Société Générale",
@@ -232,6 +242,7 @@
     "fourchette_max": 2.5,
     "mention_negociation": "Cette banque ne publie pas de grille tarifaire : le tarif se négocie au cas par cas. La fourchette ci-dessus vous donne une base de discussion.",
     "source": "estimation",
-    "derniere_maj": "2026-08-31"
+    "derniere_maj": "2026-08-31",
+    "compte_requis": true
   }
 }

@@ -108,9 +108,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Qonto est bien du côté masqué : lui et Zettle, ni l'offre
-      // actuelle ni la meilleure.
-      expect(find.byType(MaskedAmount), findsNWidgets(2));
+      // Qonto est bien du côté masqué : seule l'offre de l'utilisateur
+      // reste chiffrée, les trois autres sont verrouillées.
+      expect(find.byType(MaskedAmount), findsNWidgets(3));
       expect(find.text('Qonto — Tap to Pay + TPE'), findsOneWidget);
       expect(find.text(_euro.format(56)), findsNothing);
       // …mais pas la condition : elle décrit l'offre, pas son prix, et

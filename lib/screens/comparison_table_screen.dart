@@ -92,16 +92,16 @@ class _Vue extends StatelessWidget {
   final TpeProvider providerActuel;
   final Entitlement entitlement;
 
-  /// Les offres chiffrées en version gratuite : la moins chère de la base,
-  /// celle de l'utilisateur, et celles qu'il a saisies lui-même (dont il
-  /// connaît déjà les montants, puisqu'il en a fourni les taux).
+  /// Les offres chiffrées en version gratuite : celle de l'utilisateur,
+  /// et celles qu'il a saisies lui-même — dont il connaît déjà les
+  /// montants, puisqu'il en a fourni les taux.
+  ///
+  /// La moins chère y figurait autrefois. Elle en a été retirée : donner
+  /// la réponse gratuitement ne laissait plus rien à débloquer. L'écran
+  /// de résultat continue d'annoncer l'économie possible, seul son
+  /// bénéficiaire est retenu.
   Set<String> get _idsVisibles {
     final ids = <String>{providerActuel.id};
-    final meilleureReelle = classement
-        .where((b) => !b.provider.estPersonnalise)
-        .map((b) => b.provider.id)
-        .firstOrNull;
-    if (meilleureReelle != null) ids.add(meilleureReelle);
     for (final b in classement) {
       if (b.provider.estPersonnalise) ids.add(b.provider.id);
     }
@@ -349,7 +349,12 @@ class _LigneOffre extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (estActuel || estMeilleure || provider.estPersonnalise) ...[
+                  // Une étiquette « Meilleure offre » sur une ligne
+                  // masquée la désignerait aussi sûrement que son
+                  // montant.
+                  if (estActuel ||
+                      (estMeilleure && !verrouille) ||
+                      provider.estPersonnalise) ...[
                     const SizedBox(height: 4),
                     _Etiquette(
                       texte: estActuel

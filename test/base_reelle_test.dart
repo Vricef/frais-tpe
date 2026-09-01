@@ -92,10 +92,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Le prestataire actuel et la meilleure offre restent chiffrés ;
-    // tout le reste est masqué. Quinze lignes verrouillées, c'est la
-    // proportion qu'a prise le paywall en passant de sept à dix-sept.
-    expect(find.byType(MaskedAmount), findsNWidgets(15));
+    // Seul le prestataire de l'utilisateur reste chiffré : seize lignes
+    // sur dix-sept sont masquées, la meilleure offre comprise.
+    expect(find.byType(MaskedAmount), findsNWidgets(16));
   });
 
   testWidgets('le classement complet est cohérent une fois débloqué', (

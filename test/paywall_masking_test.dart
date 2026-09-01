@@ -87,12 +87,13 @@ void main() {
       await tester.pumpWidget(_tableau(debloque: false));
       final textes = _textesAffiches(tester).join('|');
 
-      // Visibles en gratuit : la meilleure offre et celle de l'utilisateur.
-      expect(textes, contains(_euro.format(10)));
+      // Seule l'offre de l'utilisateur est chiffrée en gratuit. La
+      // meilleure a rejoint les masquées : la donner gratuitement ne
+      // laissait plus rien à débloquer.
       expect(textes, contains(_euro.format(500)));
 
       // Masqués : aucune trace, sous aucune forme.
-      for (final cache in [50, 300, 150]) {
+      for (final cache in [10, 50, 300, 150]) {
         expect(
           textes,
           isNot(contains(_euro.format(cache))),
@@ -117,8 +118,9 @@ void main() {
         );
       }
 
-      // L'écart de la meilleure offre, lui, reste affiché : 500 - 10 = 490.
-      expect(textes, contains(_euro.format(490)));
+      // Y compris celui de la meilleure offre, désormais masquée :
+      // 500 - 10 = 490 la trahirait comme les autres.
+      expect(textes, isNot(contains(_euro.format(490))));
     });
 
     testWidgets('tous les placeholders ont exactement la même taille', (
@@ -131,7 +133,7 @@ void main() {
           .map((box) => box.size)
           .toList();
 
-      expect(tailles.length, 3, reason: '3 offres doivent être masquées');
+      expect(tailles.length, 4, reason: '4 offres doivent être masquées');
       expect(
         tailles.toSet().length,
         1,
@@ -268,7 +270,7 @@ void main() {
         for (final cache in [50, 300, 150]) {
           expect(textes, isNot(contains(_euro.format(cache))));
         }
-        expect(find.byType(MaskedAmount), findsNWidgets(3));
+        expect(find.byType(MaskedAmount), findsNWidgets(4));
       },
     );
 
@@ -288,7 +290,7 @@ void main() {
         ),
       );
 
-      expect(find.byType(MaskedAmount), findsOneWidget);
+      expect(find.byType(MaskedAmount), findsNWidgets(2));
 
       entitlement.debloquer();
       await tester.pump();

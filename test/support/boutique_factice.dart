@@ -29,12 +29,21 @@ class BoutiqueFactice implements Boutique {
   int achatsLances = 0;
   int restaurations = 0;
 
-  static ProductDetails details() => ProductDetails(
-        id: IdentifiantsProduit.android,
-        title: 'Déblocage complet',
-        description: 'Comparaison complète, PDF et sauvegarde',
-        price: '2,99 €',
-        rawPrice: 2.99,
+  static ProductDetails illimite() => ProductDetails(
+        id: IdentifiantsProduit.illimiteAndroid,
+        title: 'Tout débloquer',
+        description: 'Toutes vos comparaisons, à vie',
+        price: '4,99 €',
+        rawPrice: 4.99,
+        currencyCode: 'EUR',
+      );
+
+  static ProductDetails rapport() => ProductDetails(
+        id: IdentifiantsProduit.rapportAndroid,
+        title: 'Ce rapport',
+        description: 'Une comparaison',
+        price: '0,99 €',
+        rawPrice: 0.99,
         currencyCode: 'EUR',
       );
 
@@ -46,7 +55,7 @@ class BoutiqueFactice implements Boutique {
   }) =>
       PurchaseDetails(
         purchaseID: 'achat-1',
-        productID: produit ?? IdentifiantsProduit.android,
+        productID: produit ?? IdentifiantsProduit.illimiteAndroid,
         verificationData: PurchaseVerificationData(
           localVerificationData: '',
           serverVerificationData: '',
@@ -67,16 +76,32 @@ class BoutiqueFactice implements Boutique {
   @override
   Stream<List<PurchaseDetails>> get flux => _controleur.stream;
 
+  /// Les produits publiés. Par défaut les deux ; `produitPublie: false`
+  /// simule une boutique qui n'en connaît aucun.
   @override
-  Future<ProductDetailsResponse> produits(Set<String> identifiants) async =>
-      ProductDetailsResponse(
-        productDetails: produitPublie ? [details()] : const [],
-        notFoundIDs: produitPublie ? const [] : identifiants.toList(),
-      );
+  Future<ProductDetailsResponse> produits(Set<String> identifiants) async {
+    final publies = produitPublie
+        ? [illimite(), rapport()].where((p) => identifiants.contains(p.id)).toList()
+        : <ProductDetails>[];
+    return ProductDetailsResponse(
+      productDetails: publies,
+      notFoundIDs: identifiants
+          .where((id) => publies.every((p) => p.id != id))
+          .toList(),
+    );
+  }
+
+  int consommablesLances = 0;
 
   @override
   Future<void> acheter(PurchaseParam parametres) async {
     achatsLances++;
+    if (echecAuLancement) throw Exception('boutique injoignable');
+  }
+
+  @override
+  Future<void> acheterConsommable(PurchaseParam parametres) async {
+    consommablesLances++;
     if (echecAuLancement) throw Exception('boutique injoignable');
   }
 

@@ -14,18 +14,31 @@ import 'support/boutique_factice.dart';
 class _StockageMemoire implements StockageEntitlement {
   _StockageMemoire([this.valeur = false]);
   bool valeur;
+  Set<String> comparaisons = {};
   bool echoue = false;
 
   @override
-  Future<bool> lire() async {
+  Future<bool> lireIllimite() async {
     if (echoue) throw Exception('stockage illisible');
     return valeur;
   }
 
   @override
-  Future<void> ecrire(bool debloque) async {
+  Future<void> ecrireIllimite(bool illimite) async {
     if (echoue) throw Exception('stockage inscriptible');
-    valeur = debloque;
+    valeur = illimite;
+  }
+
+  @override
+  Future<Set<String>> lireComparaisons() async {
+    if (echoue) throw Exception('stockage illisible');
+    return comparaisons;
+  }
+
+  @override
+  Future<void> ecrireComparaisons(Set<String> nouvelles) async {
+    if (echoue) throw Exception('stockage inscriptible');
+    comparaisons = {...nouvelles};
   }
 }
 
@@ -60,7 +73,8 @@ void main() {
       expect(service.etat, EtatAchat.pret);
       // Le prix affiché doit venir de la boutique : un montant codé en
       // dur devient faux dès qu'un pays ou une taxe change.
-      expect(service.prix, '2,99 €');
+      expect(service.prixIllimite, '4,99 €');
+      expect(service.prixRapport, '0,99 €');
       expect(service.peutAcheter, isTrue);
     });
 
@@ -79,12 +93,12 @@ void main() {
       // C'est l'état de Play tant que le produit n'est pas créé : mieux
       // vaut masquer l'achat que proposer un bouton qui échouera.
       expect(service.etat, EtatAchat.indisponible);
-      expect(service.prix, isNull);
+      expect(service.prixIllimite, isNull);
     });
 
     test('un achat réussi débloque et se finalise', () async {
       await service.demarrer();
-      await service.acheter();
+      await service.acheterIllimite();
       expect(boutique.achatsLances, 1);
 
       boutique.emettre([BoutiqueFactice.achat(PurchaseStatus.purchased)]);
@@ -99,7 +113,7 @@ void main() {
 
     test('un achat annulé ne débloque rien et ne dit rien', () async {
       await service.demarrer();
-      await service.acheter();
+      await service.acheterIllimite();
 
       boutique.emettre([BoutiqueFactice.achat(PurchaseStatus.canceled)]);
       await Future<void>.delayed(Duration.zero);
@@ -113,7 +127,7 @@ void main() {
 
     test('un achat en erreur est expliqué sans plantage', () async {
       await service.demarrer();
-      await service.acheter();
+      await service.acheterIllimite();
 
       boutique.emettre([BoutiqueFactice.achat(PurchaseStatus.error)]);
       await Future<void>.delayed(Duration.zero);
@@ -126,7 +140,7 @@ void main() {
     test('un achat qui ne part pas laisse l\'écran utilisable', () async {
       await service.demarrer();
       boutique.echecAuLancement = true;
-      await service.acheter();
+      await service.acheterIllimite();
 
       expect(service.erreur, isNotNull);
       // L'écran ne doit pas rester bloqué sur un spinner éternel.
@@ -224,7 +238,7 @@ void main() {
       await tester.pumpWidget(ecran(service, entitlement));
       await tester.pumpAndSettle();
 
-      expect(find.text('Débloquer pour 2,99 €'), findsOneWidget);
+      expect(find.text('Tout débloquer — 4,99 €'), findsOneWidget);
       expect(find.text('Restaurer mes achats'), findsOneWidget);
 
       service.dispose();
@@ -243,7 +257,7 @@ void main() {
       await tester.pumpWidget(ecran(service, entitlement));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Débloquer pour'), findsNothing);
+      expect(find.textContaining('Tout débloquer'), findsNothing);
       expect(find.textContaining("n'est pas disponible"), findsOneWidget);
       // La restauration reste offerte : c'est le seul recours de qui a
       // déjà payé sur un autre appareil.
@@ -262,7 +276,7 @@ void main() {
 
       await tester.pumpWidget(ecran(service, entitlement));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Débloquer pour 2,99 €'));
+      await tester.tap(find.text('Tout débloquer — 4,99 €'));
       await tester.pump();
 
       expect(boutique.achatsLances, 1);

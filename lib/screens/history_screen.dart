@@ -82,6 +82,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
       return;
     }
 
+    // Rouvrir un calcul déjà payé ne doit rien redemander : la clé est
+    // celle de ses entrées, inchangées depuis l'achat.
+    widget.entitlement.comparaisonCourante = Entitlement.cleDe(
+      volumeMensuel: calcul.volumeMensuel,
+      panierMoyen: calcul.panierMoyen,
+      providerActuelId: calcul.providerActuelId,
+    );
+
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ResultScreen(

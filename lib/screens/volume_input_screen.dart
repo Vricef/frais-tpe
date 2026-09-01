@@ -147,6 +147,14 @@ class _VolumeInputScreenState extends State<VolumeInputScreen> {
     final actuel = _providerActuel;
     if (volume == null || actuel == null) return;
 
+    // Un rapport acheté à l'unité vaut pour cette comparaison-là : elle
+    // doit être désignée avant que l'écran de paiement puisse s'ouvrir.
+    widget.entitlement.comparaisonCourante = Entitlement.cleDe(
+      volumeMensuel: volume,
+      panierMoyen: _panierMoyen,
+      providerActuelId: actuel.id,
+    );
+
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ResultScreen(

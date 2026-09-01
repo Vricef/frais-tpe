@@ -8,7 +8,8 @@ import '../widgets/ticket_card.dart';
 
 /// Écran 5 du parcours (§8) : le déblocage par achat unique.
 ///
-/// Achat unique à 2,99 €, pas d'abonnement, et rappel explicite de
+/// Deux offres : un rapport à l'unité, ou tout à vie. Jamais
+/// d'abonnement, et rappel explicite de
 /// l'absence de publicité — la contrainte ferme du §4 est aussi le
 /// meilleur argument de vente auprès de la cible.
 class PaywallScreen extends StatefulWidget {
@@ -19,10 +20,11 @@ class PaywallScreen extends StatefulWidget {
   /// Injectable pour les tests ; par défaut, la boutique de la plateforme.
   final PurchaseService? achats;
 
-  /// Prix de repli, affiché tant que la boutique n'a pas répondu. Le prix
-  /// réel vient d'elle : lui seul est juste dans la devise et avec les
-  /// taxes du pays de l'utilisateur.
-  static const double prix = 2.99;
+  /// Prix de repli, affichés tant que la boutique n'a pas répondu. Les
+  /// prix réels viennent d'elle : eux seuls sont justes dans la devise et
+  /// avec les taxes du pays de l'utilisateur.
+  static const double prixIllimite = 4.99;
+  static const double prixRapport = 0.99;
 
   @override
   State<PaywallScreen> createState() => _PaywallScreenState();
@@ -101,7 +103,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Un seul paiement, définitif. Pas un abonnement.',
+                        'Un rapport, ou tout à vie. Jamais d\'abonnement.',
                         style: TextStyle(
                           color: colors.textSecondary,
                           fontSize: 15,
@@ -137,14 +139,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
                               textBaseline: TextBaseline.alphabetic,
                               children: [
                                 Text(
-                                  'Total',
+                                  'À partir de',
                                   style: TextStyle(
                                     color: colors.textSecondary,
                                     fontSize: 14,
                                   ),
                                 ),
                                 Text(
-                                  '2,99 €',
+                                  _achats.prixRapport ?? _prixRapportRepli,
                                   style: context.amountStyle(
                                     fontSize: 26,
                                     fontWeight: FontWeight.w700,
@@ -186,11 +188,15 @@ class _PaywallScreenState extends State<PaywallScreen> {
               ),
               if (_achats.etat == EtatAchat.indisponible)
                 _BoutiqueIndisponible()
-              else
+              else ...[
+                // L'illimité d'abord : c'est l'offre qu'on veut voir
+                // prise, et la seule que la boutique sait restaurer.
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _achats.peutAcheter ? _achats.acheter : null,
+                    onPressed: _achats.peutAcheterIllimite
+                        ? _achats.acheterIllimite
+                        : null,
                     child: _achats.etat == EtatAchat.enCours
                         ? SizedBox(
                             height: 18,
@@ -200,12 +206,48 @@ class _PaywallScreenState extends State<PaywallScreen> {
                               color: colors.onPrimary,
                             ),
                           )
-                        // Le prix vient de la boutique dès qu'elle a
-                        // répondu ; celui du cahier des charges ne sert
-                        // qu'à ne pas afficher un bouton sans montant.
-                        : Text('Débloquer pour ${_achats.prix ?? _prixDeRepli}'),
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Les prix viennent de la boutique dès
+                              // qu'elle a répondu ; ceux du code ne
+                              // servent qu'à ne pas afficher un bouton
+                              // sans montant.
+                              Text('Tout débloquer — '
+                                  '${_achats.prixIllimite ?? _prixIllimiteRepli}'),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Toutes vos comparaisons, à vie',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: colors.onPrimary.withValues(alpha: .82),
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
+                if (_achats.rapport != null) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed:
+                          _achats.peutAcheter ? _achats.acheterRapport : null,
+                      child: Text(
+                        'Ce rapport seulement — '
+                        '${_achats.prixRapport ?? _prixRapportRepli}',
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
               const SizedBox(height: 8),
               Center(
                 child: TextButton(
@@ -227,9 +269,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 }
 
-/// Prix de repli, écrit à la française : « 2,99 € ».
-final String _prixDeRepli =
-    '${PaywallScreen.prix.toStringAsFixed(2).replaceAll('.', ',')} €';
+String _aLaFrancaise(double montant) =>
+    '${montant.toStringAsFixed(2).replaceAll('.', ',')} €';
+
+/// Prix de repli, écrits à la française : « 4,99 € », « 0,99 € ».
+final String _prixIllimiteRepli = _aLaFrancaise(PaywallScreen.prixIllimite);
+final String _prixRapportRepli = _aLaFrancaise(PaywallScreen.prixRapport);
 
 /// Ni bouton d'achat ni prix quand il n'y a rien à vendre : proposer un
 /// paiement qui échouera est pire que de l'annoncer.

@@ -66,9 +66,9 @@ UN RAPPORT À GARDER
 
 Recevez le détail en PDF : la comparaison, le détail des écarts et la méthode de calcul. De quoi discuter avec votre prestataire actuel, ou avec votre banquier.
 
-GRATUIT, PUIS 3,99 € UNE SEULE FOIS
+GRATUIT, PUIS 2,99 € UNE SEULE FOIS
 
-La version gratuite compare votre offre à la meilleure du marché. Pour 3,99 € — un seul paiement, jamais d'abonnement — vous débloquez le coût exact de toutes les offres, l'export PDF et la sauvegarde de vos calculs.
+La version gratuite compare votre offre à la meilleure du marché. Pour 2,99 € — un seul paiement, jamais d'abonnement — vous débloquez le coût exact de toutes les offres, l'export PDF et la sauvegarde de vos calculs.
 
 AUCUNE PUBLICITÉ
 
@@ -152,9 +152,9 @@ UN RAPPORT À GARDER
 
 Recevez le détail en PDF : la comparaison, le détail des écarts et la méthode de calcul. De quoi discuter avec votre prestataire actuel, ou avec votre banquier.
 
-GRATUIT, PUIS 3,99 € UNE SEULE FOIS
+GRATUIT, PUIS 2,99 € UNE SEULE FOIS
 
-La version gratuite compare votre offre à la meilleure du marché. Pour 3,99 € — un seul paiement, jamais d'abonnement — vous débloquez le coût exact de toutes les offres, l'export PDF et la sauvegarde de vos calculs.
+La version gratuite compare votre offre à la meilleure du marché. Pour 2,99 € — un seul paiement, jamais d'abonnement — vous débloquez le coût exact de toutes les offres, l'export PDF et la sauvegarde de vos calculs.
 
 AUCUNE PUBLICITÉ
 
@@ -303,7 +303,7 @@ plutôt que d'annoncer que rien ne quitte l'appareil.
 | Catégorie principale | Économie et entreprise |
 | Catégorie secondaire (Apple) | Finance |
 | Classification d'âge | 4+ / Tout public |
-| Achat intégré | « Comparaison complète » — non consommable, 3,99 € |
+| Achat intégré | « Comparaison complète » — non consommable, 2,99 € |
 | Langue | Français (France) |
 
 > Catégorie principale « Économie et entreprise » plutôt que « Finance » :
@@ -346,10 +346,10 @@ motif de rejet et, surtout, fragilise la confiance auprès d'un public
 qu'on veut rassurer. Les montants n'apparaissent que dans les captures,
 comme exemple.
 
-**Cohérence prix.** Les 3,99 € cités dans la description doivent
+**Cohérence prix.** Les 2,99 € cités dans la description doivent
 correspondre exactement au prix du produit in-app configuré. Un écart
 fait rejeter la version.
 
 **Description de l'achat intégré.** Apple exige que la fiche indique
-clairement ce qui est payant. La section « GRATUIT, PUIS 3,99 € UNE SEULE
+clairement ce qui est payant. La section « GRATUIT, PUIS 2,99 € UNE SEULE
 FOIS » couvre cette exigence — ne pas la retirer par souci de concision.

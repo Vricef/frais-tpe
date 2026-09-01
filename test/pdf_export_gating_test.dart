@@ -144,7 +144,7 @@ void main() {
 
     // L'achat est joué par la boutique factice : appuyer sur le bouton
     // ne débloque plus rien par lui-même depuis le branchement réel.
-    await tester.tap(find.text('Débloquer pour 3,99 €'));
+    await tester.tap(find.text('Débloquer pour 2,99 €'));
     await tester.pump();
     boutique.emettre([BoutiqueFactice.achat(PurchaseStatus.purchased)]);
     await tester.pumpAndSettle();

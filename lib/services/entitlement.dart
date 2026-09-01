@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// L'état du déblocage par achat unique (§4 : 3,99 €).
+/// L'état du déblocage par achat unique (§4 : 2,99 €).
 ///
 /// Déblocage : comparaison multi-prestataires, export PDF, sauvegarde.
 ///
@@ -15,7 +15,7 @@ class Entitlement extends ValueNotifier<bool> {
       : super(debloque);
 
   /// Clé locale. Un utilisateur déterminé peut la forcer sur un appareil
-  /// rooté ; le contournement lui coûterait plus cher que les 3,99 €, et
+  /// rooté ; le contournement lui coûterait plus cher que les 2,99 €, et
   /// la parade — une vérification serveur — imposerait un compte, que le
   /// cahier des charges exclut.
   static const cle = 'entitlement_debloque';

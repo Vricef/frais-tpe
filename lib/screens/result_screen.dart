@@ -219,9 +219,13 @@ class _CarteResultat extends StatelessWidget {
             entitlement: entitlement,
             store: store,
           ),
-          const SizedBox(height: 8),
-          Center(
-            child: TextButton(
+          const SizedBox(height: 10),
+          // Bouton bordé et non lien discret : à l'essai, personne ne
+          // trouvait le tableau comparatif, qui est pourtant le cœur de
+          // ce que l'app a à montrer.
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -235,11 +239,17 @@ class _CarteResultat extends StatelessWidget {
                   ),
                 );
               },
-              child: Text(
+              icon: Icon(Icons.table_rows_outlined, size: 19,
+                  color: colors.accent),
+              label: Text(
                 providers.length > 1
-                    ? 'Voir les ${providers.length} offres comparées'
+                    ? 'Comparer les ${providers.length} offres'
                     : 'Voir le détail des offres',
-                style: TextStyle(color: colors.textSecondary, fontSize: 13.5),
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),

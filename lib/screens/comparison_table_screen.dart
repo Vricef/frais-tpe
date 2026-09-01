@@ -458,7 +458,7 @@ class _AppelDeblocage extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Débloquez la comparaison complète, l\'export PDF et la '
-            'sauvegarde pour 3,99 € — un seul paiement.',
+            'sauvegarde pour 2,99 € — un seul paiement.',
             style: TextStyle(
               color: colors.textSecondary,
               fontSize: 13.5,
@@ -470,7 +470,7 @@ class _AppelDeblocage extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: onTap,
-              child: const Text('Débloquer pour 3,99 €'),
+              child: const Text('Débloquer pour 2,99 €'),
             ),
           ),
         ],

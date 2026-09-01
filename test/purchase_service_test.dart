@@ -60,7 +60,7 @@ void main() {
       expect(service.etat, EtatAchat.pret);
       // Le prix affiché doit venir de la boutique : un montant codé en
       // dur devient faux dès qu'un pays ou une taxe change.
-      expect(service.prix, '3,99 €');
+      expect(service.prix, '2,99 €');
       expect(service.peutAcheter, isTrue);
     });
 
@@ -224,7 +224,7 @@ void main() {
       await tester.pumpWidget(ecran(service, entitlement));
       await tester.pumpAndSettle();
 
-      expect(find.text('Débloquer pour 3,99 €'), findsOneWidget);
+      expect(find.text('Débloquer pour 2,99 €'), findsOneWidget);
       expect(find.text('Restaurer mes achats'), findsOneWidget);
 
       service.dispose();
@@ -262,7 +262,7 @@ void main() {
 
       await tester.pumpWidget(ecran(service, entitlement));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Débloquer pour 3,99 €'));
+      await tester.tap(find.text('Débloquer pour 2,99 €'));
       await tester.pump();
 
       expect(boutique.achatsLances, 1);

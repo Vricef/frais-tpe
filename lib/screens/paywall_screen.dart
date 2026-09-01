@@ -8,7 +8,7 @@ import '../widgets/ticket_card.dart';
 
 /// Écran 5 du parcours (§8) : le déblocage par achat unique.
 ///
-/// Achat unique à 3,99 €, pas d'abonnement, et rappel explicite de
+/// Achat unique à 2,99 €, pas d'abonnement, et rappel explicite de
 /// l'absence de publicité — la contrainte ferme du §4 est aussi le
 /// meilleur argument de vente auprès de la cible.
 class PaywallScreen extends StatefulWidget {
@@ -22,7 +22,7 @@ class PaywallScreen extends StatefulWidget {
   /// Prix de repli, affiché tant que la boutique n'a pas répondu. Le prix
   /// réel vient d'elle : lui seul est juste dans la devise et avec les
   /// taxes du pays de l'utilisateur.
-  static const double prix = 3.99;
+  static const double prix = 2.99;
 
   @override
   State<PaywallScreen> createState() => _PaywallScreenState();
@@ -144,7 +144,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                   ),
                                 ),
                                 Text(
-                                  '3,99 €',
+                                  '2,99 €',
                                   style: context.amountStyle(
                                     fontSize: 26,
                                     fontWeight: FontWeight.w700,
@@ -227,7 +227,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 }
 
-/// Prix de repli, écrit à la française : « 3,99 € ».
+/// Prix de repli, écrit à la française : « 2,99 € ».
 final String _prixDeRepli =
     '${PaywallScreen.prix.toStringAsFixed(2).replaceAll('.', ',')} €';
 

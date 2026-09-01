@@ -33,8 +33,8 @@ class BoutiqueFactice implements Boutique {
         id: IdentifiantsProduit.android,
         title: 'Déblocage complet',
         description: 'Comparaison complète, PDF et sauvegarde',
-        price: '3,99 €',
-        rawPrice: 3.99,
+        price: '2,99 €',
+        rawPrice: 2.99,
         currencyCode: 'EUR',
       );
 

@@ -1,0 +1,26 @@
+# Génération des icônes de lancement, pour les deux plateformes.
+#
+#   1. déposer le logo carré 1024x1024 dans assets/icone/logo.png
+#   2. dart run flutter_launcher_icons
+#
+# Le fichier source n'est pas embarqué dans l'app : il ne sert qu'à
+# produire les déclinaisons de android/.../mipmap-* et de
+# ios/Runner/Assets.xcassets, qui sont, elles, versionnées.
+flutter_launcher_icons:
+  image_path: "assets/icone/logo.png"
+
+  android: "ic_launcher"
+  # Icône adaptative : Android applique un masque — cercle, carré arrondi,
+  # goutte selon le fabricant — et peut rogner jusqu'au tiers extérieur.
+  # Le fond terre cuite de la charte tient ce rôle, le motif reste au
+  # centre du calque d'avant-plan.
+  adaptive_icon_background: "#B85A32"
+  adaptive_icon_foreground: "assets/icone/logo-avant-plan.png"
+  # Icône monochrome des thèmes dynamiques d'Android 13+.
+  adaptive_icon_monochrome: "assets/icone/logo-avant-plan.png"
+
+  ios: true
+  # iOS refuse toute transparence sur l'icône : le canal alpha est aplati
+  # ici plutôt que découvert au moment de la soumission.
+  remove_alpha_ios: true
+  background_color_ios: "#B85A32"

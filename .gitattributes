@@ -1,0 +1,19 @@
+# Fins de ligne normalisées en LF, dans le dépôt comme dans la copie de
+# travail — y compris sous Windows.
+#
+# Sans cette règle, `flutter pub get` réécrit les registrants de plugins
+# en LF alors que Git les avait posés en CRLF : ils apparaissent modifiés
+# sans l'être, et bloquent chaque `git pull`. Les scripts Gradle et shell
+# exigent de toute façon des LF.
+* text=auto eol=lf
+
+# Binaires : jamais de conversion, elle les corromprait.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+*.jks binary
+*.keystore binary

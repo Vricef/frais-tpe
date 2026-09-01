@@ -176,7 +176,7 @@ Frais TPE est un outil indépendant. Nous ne sommes affiliés à aucun prestatai
 | Store | Ce qu'il faut fournir |
 |---|---|
 | App Store | iPhone 6.9″ (1290 × 2796) — obligatoire. Les autres tailles en sont dérivées automatiquement. iPad seulement si l'app y est publiée. |
-| Google Play | 2 minimum, 8 maximum. Portrait, 1080 × 1920 convient. Plus une **bannière 1024 × 500** (Feature graphic), obligatoire. |
+| Google Play | 2 minimum, 8 maximum. Portrait **1080 × 1920** : le rapport hauteur/largeur ne doit pas dépasser 2:1, ce qui exclut le format Apple. Plus une **bannière 1024 × 500** (Feature graphic), obligatoire. |
 
 **Parti pris visuel** — cohérent avec « Le Ticket + la jauge » :
 
@@ -259,8 +259,20 @@ python3 tool/capturer_ecrans.py brut/  # rendus 1290 x 2796
 python3 tool/composer_captures.py brut/
 ```
 
-Résultat dans `store/captures/`. Relancer la chaîne après une mise à jour
-des tarifs suffit à remettre les captures d'aplomb.
+Le troisième argument choisit le format : `apple`, `play`, ou `tous` par
+défaut.
+
+| Sortie | Format | Pour |
+|---|---|---|
+| `store/captures/` | 1290 × 2796 | App Store — les autres tailles en sont dérivées |
+| `store/captures-play/` | 1080 × 1920 | Google Play, plus la bannière 1024 × 500 |
+
+Deux séries et non une : Play refuse une capture dont le grand côté
+dépasse le double du petit, et 2796 / 1290 = 2,17. Le scénario, les
+titres et le contenu sont identiques ; seul le cadrage change.
+
+Relancer la chaîne après une mise à jour des tarifs suffit à remettre les
+captures d'aplomb.
 
 ### Bannière Google Play (1024 × 500)
 

@@ -7,7 +7,18 @@ val proprietesSignature = Properties().apply {
     val fichier = rootProject.file("key.properties")
     if (fichier.exists()) fichier.inputStream().use { load(it) }
 }
-val signatureConfiguree = proprietesSignature.getProperty("storeFile") != null
+val cheminMagasin = proprietesSignature.getProperty("storeFile")
+val signatureConfiguree = cheminMagasin != null
+// `file()` rend tel quel un chemin absolu, et résout un chemin relatif
+// depuis android/. Vérifié ici plutôt qu'à la tâche de signature :
+// l'échec tombait sinon après plusieurs minutes de compilation.
+if (signatureConfiguree && !rootProject.file(cheminMagasin).exists()) {
+    throw GradleException(
+        "Magasin de clés introuvable : $cheminMagasin -- corrigez " +
+            "`storeFile` dans android/key.properties " +
+            "(antislashs doublés sous Windows)."
+    )
+}
 
 plugins {
     id("com.android.application")

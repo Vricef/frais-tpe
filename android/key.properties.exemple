@@ -10,8 +10,12 @@
 #       -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 \
 #       -alias frais-tpe
 
-storePassword=VOTRE_MOT_DE_PASSE_DU_MAGASIN
-keyPassword=VOTRE_MOT_DE_PASSE_DE_LA_CLE
+storePassword=<A_REMPLACER>
+keyPassword=<A_REMPLACER>
 keyAlias=frais-tpe
-# Chemin absolu, ou relatif au dossier android/
-storeFile=C:\\chemin\\vers\\frais-tpe.jks
+
+# Chemin absolu du .jks, antislashs doublés sous Windows :
+#   storeFile=C:\\cles\\frais-tpe.jks
+# Un chemin d'exemple laissé tel quel fait échouer le build sur
+# « Keystore file not found », après deux minutes de compilation.
+storeFile=<A_REMPLACER>
